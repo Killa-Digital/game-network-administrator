@@ -65,7 +65,7 @@ export default function Footer() {
                     </div>
 
                     <Link
-                        href="#"
+                        href="/terminos"
                         className="group flex items-center gap-2 text-zinc-400 text-xs font-black uppercase tracking-widest hover:text-primary transition-colors"
                     >
                         <ChevronRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform stroke-[3]" />

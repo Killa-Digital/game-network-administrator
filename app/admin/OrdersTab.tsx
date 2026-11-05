@@ -31,7 +31,7 @@ export default function OrdersTab({
                     <div className="absolute top-0 right-0 w-3 h-3 bg-primary" />
                     <div className="flex justify-between items-start mb-6">
                         <div className="bg-primary/15 border border-primary/40 p-3"><DollarSign className="w-6 h-6 text-primary" /></div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Ingresos Netos</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Saldo Usado</span>
                     </div>
                     <p className="text-4xl font-black text-white tracking-tighter font-mono">S/ {totalIncome.toFixed(2)}</p>
                 </div>

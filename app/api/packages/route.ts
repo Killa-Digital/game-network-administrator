@@ -33,8 +33,16 @@ export async function GET(request: NextRequest) {
             .eq('is_active', true);
 
         const configMap = new Map();
+        const combos: any[] = [];
+
         if (productConfigs) {
-            productConfigs.forEach(p => configMap.set(p.product_code, p.price_pen));
+            productConfigs.forEach(p => {
+                if (p.is_combo) {
+                    combos.push(p);
+                } else {
+                    configMap.set(p.product_code, p.price_pen);
+                }
+            });
         }
 
         const apiKey = process.env.CODESTORE_API_KEY!;
@@ -51,39 +59,49 @@ export async function GET(request: NextRequest) {
             pkg?.packageName === gameConfig.codestore_match
         );
 
-        if (!codestorePackage) {
-            return NextResponse.json({ success: true, packages: [] });
+        let formattedPackages: any[] = [];
+
+        if (codestorePackage) {
+            formattedPackages = codestorePackage.products
+                .filter((product: any) => product.inStock)
+                .map((product: any) => {
+                    const nameLower = product.name.toLowerCase();
+                    let codeType = 'diamonds';
+                    if (nameLower.includes('semanal') || nameLower.includes('weekly')) codeType = 'weekly';
+                    else if (nameLower.includes('mensual') || nameLower.includes('monthly')) codeType = 'monthly';
+                    else if (nameLower.includes('pase') || nameLower.includes('level') || nameLower.includes('pass')) codeType = 'pass';
+
+                    const productCode = `${codeType}___${product.productId}___${product.sku}`;
+
+                    if (configMap.has(productCode)) {
+                        const finalPrice = configMap.get(productCode);
+                        return {
+                            code: productCode,
+                            name: product.name,
+                            price: Number(finalPrice),
+                            originalPrice: Number((finalPrice * 1.15).toFixed(2)),
+                            isCombo: false
+                        };
+                    }
+                    return null;
+                })
+                .filter(Boolean);
         }
 
-        const formattedPackages = codestorePackage.products
-            .filter((product: any) => product.inStock)
-            .map((product: any) => {
-                const nameLower = product.name.toLowerCase();
-                let codeType = 'diamonds';
-                if (nameLower.includes('semanal') || nameLower.includes('weekly')) codeType = 'weekly';
-                else if (nameLower.includes('mensual') || nameLower.includes('monthly')) codeType = 'monthly';
-                else if (nameLower.includes('pase') || nameLower.includes('level') || nameLower.includes('pass')) codeType = 'pass';
+        const formattedCombos = combos.map(combo => ({
+            code: combo.product_code,
+            name: combo.custom_name,
+            price: Number(combo.price_pen),
+            originalPrice: Number((combo.price_pen * 1.15).toFixed(2)),
+            isCombo: true
+        }));
 
-                const productCode = `${codeType}___${product.productId}___${product.sku}`;
-
-                if (configMap.has(productCode)) {
-                    const finalPrice = configMap.get(productCode);
-                    return {
-                        code: productCode,
-                        name: product.name,
-                        price: Number(finalPrice),
-                        originalPrice: Number((finalPrice * 1.15).toFixed(2))
-                    };
-                }
-                return null;
-            })
-            .filter(Boolean);
-
-        formattedPackages.sort((a: any, b: any) => a.price - b.price);
+        const finalCatalog = [...formattedPackages, ...formattedCombos];
+        finalCatalog.sort((a: any, b: any) => a.price - b.price);
 
         return NextResponse.json({
             success: true,
-            packages: formattedPackages
+            packages: finalCatalog
         });
 
     } catch (error) {

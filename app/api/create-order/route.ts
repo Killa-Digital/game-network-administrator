@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
-
-const client = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,16 +10,13 @@ export async function POST(req: NextRequest) {
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             {
                 cookies: {
-                    getAll() {
-                        return cookieStore.getAll();
-                    },
+                    getAll() { return cookieStore.getAll(); },
                     setAll(cookiesToSet) {
                         try {
                             cookiesToSet.forEach(({ name, value, options }) =>
                                 cookieStore.set(name, value, options)
                             );
-                        } catch (error) {
-                        }
+                        } catch (error) {}
                     },
                 },
             }
@@ -41,21 +35,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Faltan datos de la orden' }, { status: 400 });
         }
 
-        const [type, codestoreProductId, sku] = productCode.split('___');
-
         const { data: order, error } = await supabase
             .from('orders')
-            .insert([
-                {
-                    player_id: playerId,
-                    nickname: nickname,
-                    product_code: productCode,
-                    price: price,
-                    status: 'pending',
-                    user_id: user.id,
-                    user_email: user.email
-                }
-            ])
+            .insert([{
+                player_id: playerId,
+                nickname: nickname,
+                product_code: productCode,
+                price: price,
+                status: 'pending',
+                user_id: user.id,
+                user_email: user.email
+            }])
             .select()
             .single();
 
@@ -64,38 +54,43 @@ export async function POST(req: NextRequest) {
             throw error;
         }
 
-        const preference = new Preference(client);
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.imshop.pe';
+        const izipayShopId = process.env.IZIPAY_SHOP_ID;
+        const izipayPassword = process.env.IZIPAY_TEST_PASSWORD;
+        const authCredentials = Buffer.from(`${izipayShopId}:${izipayPassword}`).toString('base64');
 
-        const mpResponse = await preference.create({
-            body: {
-                items: [
-                    {
-                        id: sku || 'FF-RECARGA',
-                        title: `Recarga Free Fire - ${nickname}`,
-                        quantity: 1,
-                        unit_price: Number(price),
-                        currency_id: 'PEN',
-                    }
-                ],
-                external_reference: order.id.toString(),
-                notification_url: `${baseUrl}/api/webhooks/mercadopago`,
-                back_urls: {
-                    success: `${baseUrl}/status/success`,
-                    failure: `${baseUrl}/status/failure`,
-                    pending: `${baseUrl}/status/pending`,
-                },
-                auto_return: 'approved',
-            }
+        const amountInCents = Math.round(Number(price) * 100);
+
+        const izipayResponse = await fetch('https://api.micuentaweb.pe/api-payment/V4/Charge/CreatePayment', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${authCredentials}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amount: amountInCents,
+                currency: 'PEN',
+                orderId: order.id.toString(),
+                customer: {
+                    email: user.email
+                }
+            })
         });
+
+        const izipayData = await izipayResponse.json();
+
+        if (izipayData.status !== 'SUCCESS') {
+            console.error('Error de Izipay:', izipayData);
+            return NextResponse.json({ error: 'Error al conectar con la pasarela de pago' }, { status: 500 });
+        }
 
         return NextResponse.json({
             success: true,
-            initPoint: mpResponse.init_point || mpResponse.sandbox_init_point
+            formToken: izipayData.answer.formToken,
+            orderId: order.id
         });
 
     } catch (error) {
-        console.error('Error creando orden y preferencia:', error);
+        console.error('Error creando orden en Izipay:', error);
         return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
     }
 }
