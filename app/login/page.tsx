@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, ArrowRight, ShieldCheck, Zap, Crosshair, XCircle } from 'lucide-react';
+import {useState} from 'react';
+import {supabase} from '@/lib/supabase';
+import {useRouter} from 'next/navigation';
+import {ArrowRight, Crosshair, Loader2, Lock, Mail, ShieldCheck, XCircle, Zap} from 'lucide-react';
 
 export default function Login() {
     const [email, setEmail] = useState('');
