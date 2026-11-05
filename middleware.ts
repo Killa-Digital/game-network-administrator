@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const ADMIN_EMAIL = 'chaos40021@gmail.com';
+const ADMIN_EMAILS = ['chaos40021@gmail.com', 'otroadmin@ejemplo.com'];
 
 export async function middleware(request: NextRequest) {
     let supabaseResponse = NextResponse.next({ request });
@@ -26,9 +26,9 @@ export async function middleware(request: NextRequest) {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
-
     const pathname = request.nextUrl.pathname;
-    const isProtectedRoute = pathname === '/' || pathname.startsWith('/game');
+
+    const isProtectedRoute = pathname === '/' || pathname.startsWith('/game') || pathname.startsWith('/wallet');
     const isAdminRoute = pathname.startsWith('/admin');
 
     if (isProtectedRoute && !user) {
@@ -49,7 +49,8 @@ export async function middleware(request: NextRequest) {
             url.pathname = '/login';
             return NextResponse.redirect(url);
         }
-        if (user.email !== ADMIN_EMAIL) {
+
+        if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
             const url = request.nextUrl.clone();
             url.pathname = '/';
             return NextResponse.redirect(url);
@@ -60,5 +61,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/', '/game/:path*', '/login', '/admin'],
+    matcher: ['/','/perfil', '/game/:path*', '/wallet', '/login', '/admin/:path*'],
 };

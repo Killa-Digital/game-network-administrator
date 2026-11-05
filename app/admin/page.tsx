@@ -1,14 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { LayoutDashboard, DollarSign, ShieldAlert, ArrowLeft, Gamepad2, Crosshair } from 'lucide-react';
+import { LayoutDashboard, DollarSign, ShieldAlert, ArrowLeft, Gamepad2, Crosshair, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import OrdersTab from './OrdersTab';
 import GamesTab from './GamesTab';
 import PricingTab from './PricingTab';
+import WalletTab from './WalletTab';
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<'orders' | 'games' | 'pricing'>('orders');
+    const [activeTab, setActiveTab] = useState<'orders' | 'games' | 'pricing' | 'wallet'>('wallet');
 
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -134,7 +135,8 @@ export default function AdminDashboard() {
     };
 
     const tabs = [
-        { id: 'orders' as const, label: 'Historial', Icon: LayoutDashboard },
+        { id: 'wallet' as const, label: 'Depósitos', Icon: Wallet },
+        { id: 'orders' as const, label: 'Saldo', Icon: LayoutDashboard },
         { id: 'games' as const, label: 'Juegos', Icon: Gamepad2 },
         { id: 'pricing' as const, label: 'Precios', Icon: DollarSign },
     ];
@@ -143,7 +145,6 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-[#070609] selection:bg-[#ff2a1f] selection:text-white font-sans pb-20 relative overflow-hidden bg-halftone">
             <div className="absolute inset-0 bg-speedlines pointer-events-none z-0" />
 
-            {/* Barra superior */}
             <div className="border-b-2 border-[#1f1a29] bg-[#0c0a10] sticky top-0 z-50">
                 <div className="max-w-[1400px] mx-auto px-4 h-16 flex items-center justify-between">
                     <Link href="/" className="group flex items-center gap-3 text-[11px] font-black text-zinc-300 hover:text-primary transition-colors uppercase tracking-[0.22em]">
@@ -158,7 +159,6 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Encabezado */}
             <div className="border-b-4 border-[#ff2a1f] pt-12 pb-8 px-4 relative overflow-hidden z-10">
                 <div className="absolute -top-4 left-4 lg:left-10 z-0 pointer-events-none select-none overflow-hidden">
                     <span className="text-[6rem] sm:text-[9rem] lg:text-[12rem] font-black uppercase tracking-tighter leading-none text-stroke-subtle block">
@@ -220,7 +220,12 @@ export default function AdminDashboard() {
                         loadingConfig={loadingConfig} selectedGameTab={selectedGameTab}
                         setSelectedGameTab={setSelectedGameTab} handlePriceChange={handlePriceChange}
                         savePriceConfig={savePriceConfig} getCodeType={getCodeType}
+                        refreshConfigs={fetchConfigData}
                     />
+                )}
+
+                {activeTab === 'wallet' && (
+                    <WalletTab />
                 )}
             </div>
         </div>

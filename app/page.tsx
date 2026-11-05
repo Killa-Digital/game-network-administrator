@@ -135,13 +135,13 @@ export default function Home() {
             </div>
           </div>
 
-          <div className=" absolute bottom-0 right-0 w-full lg:w-[54%] h-[58%] sm:h-[68%] lg:h-[96%] z-10 pointer-events-none flex justify-center lg:justify-end items-end">
+          <div className="absolute bottom-[-10%] sm:bottom-0 right-[-10%] lg:right-[5%] w-[110%] sm:w-full lg:w-[48%] h-[50%] sm:h-[68%] lg:h-[96%] z-10 pointer-events-none flex justify-center lg:justify-end items-end">
             {heroSlides.map((slide, index) => (
                 <img
                     key={slide.src}
                     src={slide.src}
                     alt={slide.styleName}
-                    className={`absolute bottom-0 w-auto max-w-[95%] lg:max-w-[105%] h-full object-contain object-bottom origin-bottom transition-all duration-700 ease-out drop-shadow-[0_15px_35px_rgba(0,0,0,0.95)] ${
+                    className={`absolute bottom-0 w-auto max-w-[100%] h-full object-contain object-bottom origin-bottom transition-all duration-700 ease-out drop-shadow-[0_15px_35px_rgba(0,0,0,0.95)] ${
                         currentSlide === index
                             ? 'opacity-100 scale-100 translate-y-0 rotate-0'
                             : 'opacity-0 scale-90 translate-y-6 rotate-1'
@@ -149,7 +149,7 @@ export default function Home() {
                 />
             ))}
 
-            <div className="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-[#070609] via-[#070609]/85 to-transparent z-20" />
+            <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-[#070609] via-[#070609]/90 to-transparent z-20" />
           </div>
         </section>
 
