@@ -5,7 +5,7 @@ import { LogIn, LogOut, ShieldAlert, User, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-const ADMIN_EMAILS = ['chaos40021@gmail.com']
+const ADMIN_EMAILS = ['chaos40021@gmail.com',"mckenzey17@gmail.com"]
 
 export default function AuthButton() {
   const [user, setUser] = useState<any>(null)
