@@ -485,6 +485,7 @@ export default function PricingTab({
                             >
                               <option value="fragment">Fragmentos</option>
                               <option value="box">Cajas Tokens</option>
+                              <option value="passe">Pase Booyah</option>
                             </select>
                           </div>
                           <div className="md:col-span-2">
