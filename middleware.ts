@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
-const ADMIN_EMAILS = ['chaos40021@gmail.com', 'otroadmin@ejemplo.com', 'mrbeast@gmail.com']
+const ADMIN_EMAILS = ['chaos40021@gmail.com', 'otroadmin@ejemplo.com', 'Mckenzey17@gmail.com']
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

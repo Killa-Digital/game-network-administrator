@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
 
     const numPrice = Number(price)
 
-    // 1. Leer saldo actual
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('balance')
@@ -68,11 +67,9 @@ export async function POST(req: NextRequest) {
         { status: 402 }
       )
 
-    // 2. Descontar saldo
     const newBalance = profile.balance - numPrice
     await supabaseAdmin.from('profiles').update({ balance: newBalance }).eq('id', user.id)
 
-    // 3. Crear la Orden
     const isManual = productCode.startsWith('MANUAL_')
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -98,7 +95,7 @@ export async function POST(req: NextRequest) {
       try {
         await resend.emails.send({
           from: 'ordenes@mail.imshop.games',
-          to: 'galafloresangelemilio@gmail.com',
+          to: 'Mckenzey17@gmail.com',
           subject: `Nueva Orden Manual - ${productCode}`,
           html: `
             <div style="font-family: sans-serif; padding: 20px; background-color: #070609; color: #ffffff;">
