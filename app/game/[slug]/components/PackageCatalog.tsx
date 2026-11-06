@@ -383,6 +383,7 @@ export default function PackageCatalog({
                   <br />
                   <strong className="font-black mt-0.5 block text-white">
                     Requisito: la cuenta de Free Fire debe ser como mínimo nivel 15.
+                    El buzón de mensajería del juego debe estar en cero.
                   </strong>
                 </p>
                 <label className="flex items-center gap-3 cursor-pointer group w-fit">
