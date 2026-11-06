@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
       try {
         await resend.emails.send({
           from: 'ordenes@mail.imshop.games',
-          to: 'galafloresangelemilio@gmail.com',
+          to: 'mckenzey17@gmail.com',
           subject: `Nueva Orden Manual - ${productCode}`,
           html: `
             <div style="font-family: sans-serif; padding: 20px; background-color: #070609; color: #ffffff;">

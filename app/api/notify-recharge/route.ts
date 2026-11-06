@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: 'pagos@mail.imshop.games',
-      to: 'galafloresangelemilio@gmail.com',
+      to: 'mckenzey17@gmail.com',
       subject: `💰 Nueva Recarga por Aprobar - S/ ${amount}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px; background-color: #070609; color: #ffffff;">
