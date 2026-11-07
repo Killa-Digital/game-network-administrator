@@ -28,7 +28,7 @@ interface PackageCatalogProps {
   checkoutLoading: boolean
 }
 
-type ModalCategory = 'FRAGMENTOS' | 'CAJAS' | 'MEMBRESÍAS' | null
+type ModalCategory = 'FRAGMENTOS' | 'CAJAS' | 'MEMBRESÍAS' | 'PASES' | null
 
 export default function PackageCatalog({
   packages,
@@ -41,7 +41,6 @@ export default function PackageCatalog({
   const [termsAccepted, setTermsAccepted] = useState(false)
   const { nickname, productCode, price, setProduct } = useCartStore()
 
-  // Clasificación dinámica basada en el código Y el nombre del paquete
   const isPass = (code: string, name: string = '') =>
     code.toLowerCase().includes('pass') ||
     name.toLowerCase().includes('pase') ||
@@ -71,7 +70,6 @@ export default function PackageCatalog({
   const memberships = packages.filter((pkg) => isMembership(pkg.code, pkg.name))
 
   const openModal = (category: ModalCategory) => {
-    // Si abre fragmentos, mantenemos o reiniciamos el check según convenga, pero ya no se muestra doble
     setModalCategory(category)
   }
 
@@ -79,7 +77,6 @@ export default function PackageCatalog({
     setModalCategory(null)
   }
 
-  // Obtener los paquetes correspondientes al modal abierto
   const currentModalPackages =
     modalCategory === 'FRAGMENTOS'
       ? fragments
@@ -87,15 +84,15 @@ export default function PackageCatalog({
         ? boxes
         : modalCategory === 'MEMBRESÍAS'
           ? memberships
-          : []
+          : modalCategory === 'PASES'
+            ? passes
+            : []
 
-  // Encontrar el nombre del paquete seleccionado actualmente
   const selectedPackage = packages.find((pkg) => pkg.code === productCode)
   const isSelectedProductFragment = productCode
     ? isFragment(productCode, selectedPackage?.name || '')
     : false
 
-  // Validar si debe bloquearse el botón de pago porque es fragmento y no aceptó términos
   const isCheckoutDisabled =
     !productCode || checkoutLoading || (isSelectedProductFragment && !termsAccepted)
 
@@ -118,7 +115,6 @@ export default function PackageCatalog({
         </div>
       )}
 
-      {/* MODAL INTERNO DE OPCIONES EXTRAS (Limpio, sin advertencia repetida) */}
       {modalCategory && (
         <div className="absolute inset-0 z-40 bg-[#0c0a10]/95 backdrop-blur-md flex flex-col p-6 animate-in fade-in zoom-in-95">
           <div className="flex justify-between items-center mb-6">
@@ -382,7 +378,8 @@ export default function PackageCatalog({
                   La entrega de este producto podría demorar dependiendo de la disponibilidad.
                   <br />
                   <strong className="font-black mt-0.5 block text-white">
-                    Requisito: la cuenta de Free Fire debe ser como mínimo nivel 15.
+                    Requisito: la cuenta de Free Fire debe ser como mínimo nivel 15. El buzón de
+                    mensajería del juego debe estar en cero.
                   </strong>
                 </p>
                 <label className="flex items-center gap-3 cursor-pointer group w-fit">

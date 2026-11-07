@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function POST(req: NextRequest) {
+
+  const resend = new Resend(process.env.RESEND_API_KEY!)
+
   try {
     const body = await req.json()
     const { amount, userId, userEmail } = body
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: 'pagos@mail.imshop.games',
-      to: 'Mckenzey17@gmail.com',
+      to: 'mckenzey17@gmail.com',
       subject: `💰 Nueva Recarga por Aprobar - S/ ${amount}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px; background-color: #070609; color: #ffffff;">

@@ -82,7 +82,7 @@ export default function RootLayout({
         {MAINTENANCE_MODE ? <Maintenance /> : <LayoutWrapper>{children}</LayoutWrapper>}
 
         <a
-          href="https://wa.me/51910233265"
+          href="https://wa.me/51936667063"
           target="_blank"
           rel="noopener noreferrer"
           className="fixed bottom-6 right-6 z-50 group bg-[#25D366] p-3 shadow-[4px_4px_0px_#000000] border-2 border-black hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_#000000] transition-all"

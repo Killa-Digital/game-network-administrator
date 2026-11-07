@@ -5,14 +5,14 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { Resend } from 'resend'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const resend = new Resend(process.env.RESEND_API_KEY!)
-
 export async function POST(req: NextRequest) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const resend = new Resend(process.env.RESEND_API_KEY!)
+
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       try {
         await resend.emails.send({
           from: 'ordenes@mail.imshop.games',
-          to: 'Mckenzey17@gmail.com',
+          to: 'mckenzey17@gmail.com',
           subject: `Nueva Orden Manual - ${productCode}`,
           html: `
             <div style="font-family: sans-serif; padding: 20px; background-color: #070609; color: #ffffff;">
