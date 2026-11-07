@@ -238,6 +238,10 @@ export default function WalletPage() {
                       </div>
                     </div>
 
+                    {paymentMethod === 'yape' && (
+                      <p className="text-sm font-black text-white tracking-wide mb-5">910233265</p>
+                    )}
+
                     <button
                       onClick={downloadQR}
                       className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#00e5ff] hover:text-white border-b border-[#00e5ff]/30 hover:border-white transition-colors pb-0.5 cursor-pointer"
