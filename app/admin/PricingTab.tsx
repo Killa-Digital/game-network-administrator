@@ -5,6 +5,7 @@ import {
   Box,
   ChevronDown,
   ChevronUp,
+  Crown,
   Eye,
   EyeOff,
   Gamepad2,
@@ -55,7 +56,7 @@ export default function PricingTab({
   const [selectedNativeItem, setSelectedNativeItem] = useState('')
   const [manualName, setManualName] = useState('')
   const [manualPrice, setManualPrice] = useState('')
-  const [manualType, setManualType] = useState<'fragment' | 'box'>('fragment')
+  const [manualType, setManualType] = useState<'fragment' | 'box' | 'passe'>('fragment')
 
   // Estados de control para colapsar/expandir las secciones de cada juego
   const [openSections, setOpenSections] = useState<
@@ -79,6 +80,7 @@ export default function PricingTab({
   const [editingManualCode, setEditingManualCode] = useState<string | null>(null)
   const [editManualName, setEditManualName] = useState('')
   const [editManualPrice, setEditManualPrice] = useState('')
+
   // Estado para editar combos personalizados en línea
   const [editingComboCode, setEditingComboCode] = useState<string | null>(null)
   const [editComboName, setEditComboName] = useState('')
@@ -701,7 +703,9 @@ export default function PricingTab({
                             </label>
                             <select
                               value={manualType}
-                              onChange={(e) => setManualType(e.target.value as 'fragment' | 'box')}
+                              onChange={(e) =>
+                                setManualType(e.target.value as 'fragment' | 'box' | 'passe')
+                              }
                               className="w-full bg-[#070609] border-2 border-white/15 px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#00e5ff] cursor-pointer"
                             >
                               <option value="fragment">Fragmentos</option>
@@ -751,7 +755,11 @@ export default function PricingTab({
 
                                   if (error) alert('Error al guardar: ' + error.message)
                                   else {
-                                    alert('Producto creado con éxito')
+                                    setNotify({
+                                      isVisible: true,
+                                      message: 'Producto manual creado con éxito',
+                                      type: 'success',
+                                    })
                                     setManualName('')
                                     setManualPrice('')
                                     refreshConfigs()
@@ -765,117 +773,238 @@ export default function PricingTab({
                           </div>
                         </div>
 
-                        {/* Lista de Productos Manuales Creados (Con Edición de Cantidad/Nombre y Precio) */}
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-black text-[#00e5ff] uppercase tracking-[0.2em] mb-3">
-                            Productos Manuales Activos
-                          </label>
+                        {/* Lista de Productos Manuales Creados (Agrupados) */}
+                        <div className="mt-8 pt-6 border-t-2 border-white/5">
+                          <h4 className="text-[11px] font-black text-white uppercase tracking-[0.2em] mb-6">
+                            Inventario de Productos Manuales
+                          </h4>
 
-                          {Object.values(productConfigs)
-                            .filter((p: any) => p.game_slug === selectedGameTab && p.manual_type)
-                            .map((pkg: any) => {
-                              const isEditing = editingManualCode === pkg.product_code
+                          {[
+                            {
+                              id: 'fragment',
+                              title: 'Fragmentos',
+                              icon: Puzzle,
+                              items: Object.values(productConfigs).filter(
+                                (p: any) =>
+                                  p.game_slug === selectedGameTab && p.manual_type === 'fragment'
+                              ),
+                            },
+                            {
+                              id: 'box',
+                              title: 'Cajas Tokens',
+                              icon: Box,
+                              items: Object.values(productConfigs).filter(
+                                (p: any) =>
+                                  p.game_slug === selectedGameTab && p.manual_type === 'box'
+                              ),
+                            },
+                            {
+                              id: 'passe',
+                              title: 'Pases Booyah',
+                              icon: Crown,
+                              items: Object.values(productConfigs).filter(
+                                (p: any) =>
+                                  p.game_slug === selectedGameTab && p.manual_type === 'passe'
+                              ),
+                            },
+                          ].map((group) => {
+                            if (group.items.length === 0) return null
 
-                              return (
-                                <div
-                                  key={pkg.product_code}
-                                  className="flex items-center justify-between bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors gap-4"
-                                >
-                                  {isEditing ? (
-                                    <div className="flex-1 flex items-center gap-3">
-                                      <input
-                                        type="text"
-                                        value={editManualName}
-                                        onChange={(e) => setEditManualName(e.target.value)}
-                                        className="bg-[#070609] border border-[#00e5ff] px-2 py-1 text-xs font-bold text-white outline-none w-full max-w-xs uppercase"
-                                      />
-                                      <div className="relative w-28">
-                                        <span className="absolute left-2 top-1 text-xs text-zinc-400">
-                                          S/
-                                        </span>
-                                        <input
-                                          type="number"
-                                          step="0.10"
-                                          value={editManualPrice}
-                                          onChange={(e) => setEditManualPrice(e.target.value)}
-                                          className="w-full bg-[#070609] border border-[#00e5ff] pl-6 pr-2 py-1 text-xs font-black font-mono text-[#ffb703] outline-none"
-                                        />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-3">
-                                      {pkg.manual_type === 'fragment' ? (
-                                        <Puzzle className="w-4 h-4 text-[#00e5ff]" />
-                                      ) : (
-                                        <Box className="w-4 h-4 text-[#00e5ff]" />
-                                      )}
-                                      <span className="font-black text-sm uppercase tracking-wide text-white">
-                                        {pkg.manual_name}
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  <div className="flex items-center gap-4">
-                                    {!isEditing && (
-                                      <span className="text-[#ffb703] font-black font-mono">
-                                        S/ {pkg.price_pen.toFixed(2)}
-                                      </span>
-                                    )}
-
-                                    {isEditing ? (
-                                      <button
-                                        onClick={async () => {
-                                          if (!editManualName || !editManualPrice)
-                                            return alert('Completa los campos')
-                                          const { error } = await supabase
-                                            .from('product_config')
-                                            .update({
-                                              manual_name: editManualName,
-                                              price_pen: Number(editManualPrice),
-                                            })
-                                            .eq('product_code', pkg.product_code)
-
-                                          if (error) alert('Error al actualizar: ' + error.message)
-                                          else {
-                                            setEditingManualCode(null)
-                                            refreshConfigs()
-                                          }
-                                        }}
-                                        className="bg-[#00e5ff] text-black px-3 py-1 text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1"
-                                      >
-                                        <Save className="w-3.5 h-3.5" /> Guardar
-                                      </button>
-                                    ) : (
-                                      <button
-                                        onClick={() => {
-                                          setEditingManualCode(pkg.product_code)
-                                          setEditManualName(pkg.manual_name || '')
-                                          setEditManualPrice(pkg.price_pen || '')
-                                        }}
-                                        className="text-[10px] uppercase font-bold tracking-widest text-[#00e5ff] hover:underline cursor-pointer"
-                                      >
-                                        Editar
-                                      </button>
-                                    )}
-
-                                    {/* Botón para desactivar / eliminar lógicamente */}
-                                    <button
-                                      onClick={async () => {
-                                        const { error } = await supabase
-                                          .from('product_config')
-                                          .update({ is_active: false })
-                                          .eq('product_code', pkg.product_code)
-                                        if (!error) refreshConfigs()
-                                      }}
-                                      className="text-zinc-500 hover:text-[#ff2a1f] transition-colors p-1 cursor-pointer"
-                                      title="Ocultar de la tienda"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
+                            return (
+                              <div key={group.id} className="mb-6 last:mb-0 animate-in fade-in">
+                                {/* Subtítulo de la Categoría */}
+                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#00e5ff]/20">
+                                  <group.icon className="w-4 h-4 text-[#00e5ff]" />
+                                  <label className="text-[10px] font-black text-[#00e5ff] uppercase tracking-[0.2em]">
+                                    {group.title}
+                                  </label>
+                                  <span className="text-[9px] font-bold text-zinc-500 bg-white/5 px-2 py-0.5 ml-2 border border-white/5">
+                                    {group.items.length}{' '}
+                                    {group.items.length === 1 ? 'creado' : 'creados'}
+                                  </span>
                                 </div>
-                              )
-                            })}
+
+                                {/* Elementos de la Categoría */}
+                                <div className="space-y-2">
+                                  {group.items.map((pkg: any) => {
+                                    const isEditing = editingManualCode === pkg.product_code
+
+                                    return (
+                                      <div
+                                        key={pkg.product_code}
+                                        className={`flex items-center justify-between bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors gap-4 ${
+                                          pkg.is_active ? '' : 'opacity-40 grayscale'
+                                        }`}
+                                      >
+                                        {isEditing ? (
+                                          <div className="flex-1 flex items-center gap-3">
+                                            <input
+                                              type="text"
+                                              value={editManualName}
+                                              onChange={(e) => setEditManualName(e.target.value)}
+                                              className="bg-[#070609] border border-[#00e5ff] px-2 py-1 text-xs font-bold text-white outline-none w-full max-w-xs uppercase"
+                                            />
+                                            <div className="relative w-28">
+                                              <span className="absolute left-2 top-1 text-xs text-zinc-400">
+                                                S/
+                                              </span>
+                                              <input
+                                                type="number"
+                                                step="0.10"
+                                                value={editManualPrice}
+                                                onChange={(e) => setEditManualPrice(e.target.value)}
+                                                className="w-full bg-[#070609] border border-[#00e5ff] pl-6 pr-2 py-1 text-xs font-black font-mono text-[#ffb703] outline-none"
+                                              />
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-3">
+                                            <group.icon className="w-4 h-4 text-[#00e5ff]" />
+                                            <span className="font-black text-sm uppercase tracking-wide text-white">
+                                              {pkg.manual_name}
+                                            </span>
+                                          </div>
+                                        )}
+
+                                        <div className="flex items-center gap-4">
+                                          {!isEditing && (
+                                            <span className="text-[#ffb703] font-black font-mono">
+                                              S/ {Number(pkg.price_pen).toFixed(2)}
+                                            </span>
+                                          )}
+
+                                          {isEditing ? (
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                onClick={() => setEditingManualCode(null)}
+                                                className="p-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                                title="Cancelar"
+                                              >
+                                                <X className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                onClick={async () => {
+                                                  if (!editManualName || !editManualPrice)
+                                                    return alert('Completa los campos')
+                                                  const { error } = await supabase
+                                                    .from('product_config')
+                                                    .update({
+                                                      manual_name: editManualName,
+                                                      price_pen: Number(editManualPrice),
+                                                    })
+                                                    .eq('product_code', pkg.product_code)
+
+                                                  if (error) {
+                                                    setNotify({
+                                                      isVisible: true,
+                                                      message: 'Error al actualizar',
+                                                      type: 'error',
+                                                    })
+                                                  } else {
+                                                    setEditingManualCode(null)
+                                                    setNotify({
+                                                      isVisible: true,
+                                                      message: 'Producto manual actualizado',
+                                                      type: 'success',
+                                                    })
+                                                    refreshConfigs()
+                                                  }
+                                                }}
+                                                className="bg-[#00e5ff] text-black px-3 py-1 text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 hover:bg-white transition-colors"
+                                              >
+                                                <Save className="w-3.5 h-3.5" /> Guardar
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center gap-2">
+                                              {/* Ojito - Ocultar/Mostrar */}
+                                              <button
+                                                onClick={async () => {
+                                                  const { error } = await supabase
+                                                    .from('product_config')
+                                                    .update({ is_active: !pkg.is_active })
+                                                    .eq('product_code', pkg.product_code)
+                                                  if (!error) refreshConfigs()
+                                                }}
+                                                className={`p-2 border-2 transition-colors cursor-pointer ${
+                                                  pkg.is_active
+                                                    ? 'text-[#00e5ff] border-[#00e5ff]/40 bg-[#00e5ff]/10'
+                                                    : 'text-zinc-500 border-white/10 hover:text-white'
+                                                }`}
+                                                title="Ocultar/Mostrar"
+                                              >
+                                                {pkg.is_active ? (
+                                                  <Eye className="w-4 h-4" />
+                                                ) : (
+                                                  <EyeOff className="w-4 h-4" />
+                                                )}
+                                              </button>
+
+                                              {/* Lápiz - Editar */}
+                                              <button
+                                                onClick={() => {
+                                                  setEditingManualCode(pkg.product_code)
+                                                  setEditManualName(pkg.manual_name || '')
+                                                  setEditManualPrice(pkg.price_pen || '')
+                                                }}
+                                                className="p-2 border-2 border-white/10 text-zinc-400 hover:text-[#00e5ff] hover:border-[#00e5ff]/40 hover:bg-[#00e5ff]/10 transition-colors cursor-pointer"
+                                                title="Editar producto manual"
+                                              >
+                                                <Pencil className="w-4 h-4" />
+                                              </button>
+
+                                              {/* Basurero - Eliminar */}
+                                              <button
+                                                onClick={async () => {
+                                                  if (
+                                                    window.confirm(
+                                                      '¿Estás seguro de que deseas eliminar este producto manual?'
+                                                    )
+                                                  ) {
+                                                    const { error } = await supabase
+                                                      .from('product_config')
+                                                      .delete()
+                                                      .eq('product_code', pkg.product_code)
+                                                    if (!error) {
+                                                      setNotify({
+                                                        isVisible: true,
+                                                        message: 'Producto manual eliminado',
+                                                        type: 'success',
+                                                      })
+                                                      refreshConfigs()
+                                                    } else {
+                                                      setNotify({
+                                                        isVisible: true,
+                                                        message: 'Error al eliminar',
+                                                        type: 'error',
+                                                      })
+                                                    }
+                                                  }
+                                                }}
+                                                className="p-2 border-2 border-white/10 text-zinc-400 hover:text-[#ff2a1f] hover:border-[#ff2a1f]/40 hover:bg-[#ff2a1f]/10 transition-colors cursor-pointer"
+                                                title="Eliminar producto"
+                                              >
+                                                <Trash2 className="w-4 h-4" />
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          })}
+
+                          {/* Mensaje por si no hay absolutamente ningún producto manual */}
+                          {Object.values(productConfigs).filter(
+                            (p: any) => p.game_slug === selectedGameTab && p.manual_type
+                          ).length === 0 && (
+                            <p className="text-xs text-zinc-500 font-bold italic text-center py-6 border border-dashed border-white/10 bg-white/5">
+                              No hay productos manuales creados todavía.
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
