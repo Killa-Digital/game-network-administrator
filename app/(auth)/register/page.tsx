@@ -28,10 +28,13 @@ export default function RegisterPage() {
   }
 
   const handleGoogleLogin = async () => {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${baseUrl}/` },
+      options: {
+        redirectTo: `${baseUrl}/auth/callback`,
+      },
     })
   }
 
@@ -62,7 +65,7 @@ export default function RegisterPage() {
         onClick={handleGoogleLogin}
         className="w-full mb-8 py-4 bg-[#070609] border-2 border-white/20 text-white font-black text-xs uppercase tracking-[0.18em] shadow-[4px_4px_0px_#1f1a29] hover:bg-white hover:text-black hover:border-black hover:shadow-[4px_4px_0px_#ff2a1f] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-3 group cursor-pointer"
       >
-        <IconGoogle /> REGISTRARSE CON GOOGLE
+        <IconGoogle /> AUTENTICAR CON GOOGLE
       </button>
 
       <div className="flex items-center gap-4 mb-8">
