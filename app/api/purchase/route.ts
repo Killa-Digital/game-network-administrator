@@ -5,14 +5,14 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { Resend } from 'resend'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const resend = new Resend(process.env.RESEND_API_KEY!)
-
 export async function POST(req: NextRequest) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const resend = new Resend(process.env.RESEND_API_KEY!)
+
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
 
     const numPrice = Number(price)
 
-    // 1. Leer saldo actual
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('balance')
@@ -68,11 +67,9 @@ export async function POST(req: NextRequest) {
         { status: 402 }
       )
 
-    // 2. Descontar saldo
     const newBalance = profile.balance - numPrice
     await supabaseAdmin.from('profiles').update({ balance: newBalance }).eq('id', user.id)
 
-    // 3. Crear la Orden
     const isManual = productCode.startsWith('MANUAL_')
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
