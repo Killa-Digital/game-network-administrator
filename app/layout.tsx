@@ -3,16 +3,11 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Maintenance from '@/components/Maintenance'
 import LayoutWrapper from '@/components/LayoutWrapper'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
+const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'IM Shop | Recargas al instante para Free Fire',
@@ -37,18 +32,55 @@ export const metadata: Metadata = {
     locale: 'es_PE',
     type: 'website',
   },
-  icons: {
-    icon: '/favicon.svg',
-  },
+  icons: { icon: '/favicon.svg' },
 }
 
-const MAINTENANCE_MODE = false
+const ADMIN_EMAILS = [
+  'chaos40021@gmail.com',
+  'mckenzey17@gmail.com',
+]
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+      },
+    }
+  )
+
+  const { data: settings } = await supabase
+    .from('site_settings')
+    .select('maintenance_mode')
+    .eq('id', 1)
+    .single()
+
+  const isMaintenanceActive = settings?.maintenance_mode || false
+
+  let isAdmin = false
+
+  if (isMaintenanceActive) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user && user.email && ADMIN_EMAILS.includes(user.email)) {
+      isAdmin = true
+    }
+  }
+
+  const showMaintenanceScreen = isMaintenanceActive && !isAdmin
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -58,10 +90,7 @@ export default function RootLayout({
     publisher: {
       '@type': 'Organization',
       name: 'IM Shop',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://www.imshop.games/logo.png',
-      },
+      logo: { '@type': 'ImageObject', url: 'https://www.imshop.games/logo.png' },
     },
     potentialAction: {
       '@type': 'SearchAction',
@@ -79,7 +108,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-[#050505] text-zinc-200 selection:bg-yellow-400 selection:text-black relative">
-        {MAINTENANCE_MODE ? <Maintenance /> : <LayoutWrapper>{children}</LayoutWrapper>}
+        {showMaintenanceScreen ? <Maintenance /> : <LayoutWrapper>{children}</LayoutWrapper>}
 
         <a
           href="https://wa.me/51936667063"

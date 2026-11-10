@@ -16,6 +16,7 @@ import OrdersTab from './OrdersTab'
 import GamesTab from './GamesTab'
 import PricingTab from './PricingTab'
 import WalletTab from './WalletTab'
+import MaintenanceToggle from '@/components/MaintenanceToggle'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'orders' | 'games' | 'pricing' | 'wallet'>('wallet')
@@ -204,23 +205,31 @@ export default function AdminDashboard() {
         <div className="absolute right-[5%] top-0 w-[320px] h-[320px] rounded-full blur-[130px] pointer-events-none z-0 bg-gradient-to-tr from-[#ff2a1f]/30 via-[#ffb703]/20 to-[#00e5ff]/10" />
 
         <div className="max-w-[1400px] mx-auto relative z-10">
-          <div className="inline-flex items-center gap-3 bg-[#120e17] border-2 border-[#ff2a1f] px-4 py-1.5 mb-5 -skew-x-12 shadow-[4px_4px_0px_#ff2a1f]">
-            <span className="skew-x-12 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.25em] text-white">
-              <Crosshair
-                className="w-3.5 h-3.5 text-primary animate-spin"
-                style={{ animationDuration: '8s' }}
-              />
-              PANEL — <span className="text-primary">CONTROL TOTAL</span>
-            </span>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9] mb-8 drop-shadow-[5px_5px_0px_#000000]">
-            CENTRO DE{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff2a1f] via-[#ff6b00] to-[#ffb703]">
-              MANDO
-            </span>
-          </h1>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-3 bg-[#120e17] border-2 border-[#ff2a1f] px-4 py-1.5 mb-5 -skew-x-12 shadow-[4px_4px_0px_#ff2a1f]">
+                <span className="skew-x-12 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.25em] text-white">
+                  <Crosshair
+                    className="w-3.5 h-3.5 text-primary animate-spin"
+                    style={{ animationDuration: '8s' }}
+                  />
+                  PANEL — <span className="text-primary">CONTROL TOTAL</span>
+                </span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.9] drop-shadow-[5px_5px_0px_#000000]">
+                CENTRO DE{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff2a1f] via-[#ff6b00] to-[#ffb703]">
+                  MANDO
+                </span>
+              </h1>
+            </div>
 
-          <div className="inline-flex flex-wrap gap-2 bg-[#070609] border-2 border-white/15 p-1.5">
+            <div className="w-full md:w-auto md:max-w-xs shrink-0">
+              <MaintenanceToggle />
+            </div>
+          </div>
+
+          <div className="inline-flex flex-wrap gap-2 bg-[#070609] border-2 border-white/15 p-1.5 mt-2">
             {tabs.map(({ id, label, Icon }) => (
               <button
                 key={id}
