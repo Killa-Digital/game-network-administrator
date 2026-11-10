@@ -89,12 +89,14 @@ export default function PackageCatalog({
             : []
 
   const selectedPackage = packages.find((pkg) => pkg.code === productCode)
-  const isSelectedProductFragment = productCode
-    ? isFragment(productCode, selectedPackage?.name || '')
+
+  const requiresWarning = productCode
+    ? isFragment(productCode, selectedPackage?.name || '') ||
+      isBox(productCode, selectedPackage?.name || '') ||
+      isPass(productCode, selectedPackage?.name || '')
     : false
 
-  const isCheckoutDisabled =
-    !productCode || checkoutLoading || (isSelectedProductFragment && !termsAccepted)
+  const isCheckoutDisabled = !productCode || checkoutLoading || (requiresWarning && !termsAccepted)
 
   return (
     <div className="h-full bg-[#110f16] border-2 border-white/20 p-6 md:p-8 flex flex-col shadow-[6px_6px_0px_#1f1a29] relative overflow-hidden">
@@ -355,7 +357,7 @@ export default function PackageCatalog({
       </div>
 
       <div className="pt-6 border-t-2 border-white/10 mt-auto relative z-10">
-        {/* SECCIÓN: Mostrar el nombre del paquete seleccionado y advertencia de demora única si es fragmento */}
+        {/* SECCIÓN: Mostrar el nombre del paquete seleccionado y advertencia */}
         {selectedPackage && (
           <div className="mb-4 bg-[#070609] border-2 border-white/15 p-4 relative">
             <div className="absolute top-0 right-0 w-2 h-2 bg-[#ffb703]" />
@@ -371,8 +373,8 @@ export default function PackageCatalog({
               {selectedPackage.name}
             </p>
 
-            {/* Única advertencia y check de términos si es un fragmento */}
-            {isSelectedProductFragment && (
+            {/* Advertencia y check de términos para fragmentos, cajas o pases */}
+            {requiresWarning && (
               <div className="mt-3 pt-3 border-t border-white/10">
                 <p className="text-[#ffb703] text-[10px] md:text-xs leading-relaxed mb-2.5 font-medium">
                   La entrega de este producto podría demorar dependiendo de la disponibilidad.

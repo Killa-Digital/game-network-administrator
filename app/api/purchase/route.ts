@@ -5,14 +5,14 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { Resend } from 'resend'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const resend = new Resend(process.env.RESEND_API_KEY!)
-
 export async function POST(req: NextRequest) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const resend = new Resend(process.env.RESEND_API_KEY!)
+
   try {
     const cookieStore = await cookies()
     const supabase = createServerClient(
@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
 
     const numPrice = Number(price)
 
-    // 1. Leer saldo actual
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('balance')
@@ -68,11 +67,9 @@ export async function POST(req: NextRequest) {
         { status: 402 }
       )
 
-    // 2. Descontar saldo
     const newBalance = profile.balance - numPrice
     await supabaseAdmin.from('profiles').update({ balance: newBalance }).eq('id', user.id)
 
-    // 3. Crear la Orden
     const isManual = productCode.startsWith('MANUAL_')
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -95,24 +92,56 @@ export async function POST(req: NextRequest) {
     if (isManual) {
       console.log(`[MANUAL] Orden ${order.id} registrada. Enviando correo a administrador...`)
 
+      let tipoManual = 'Producto Manual'
+      if (productCode.includes('FRAGMENT')) tipoManual = 'Fragmentos'
+      else if (productCode.includes('BOX')) tipoManual = 'Cajas Tokens'
+      else if (productCode.includes('PASSE')) tipoManual = 'Pase Booyah'
+
       try {
         await resend.emails.send({
           from: 'ordenes@mail.imshop.games',
           to: 'mckenzey17@gmail.com',
-          subject: `Nueva Orden Manual - ${productCode}`,
+          subject: `IMSHOP | Nueva Orden Manual - ${tipoManual}`,
           html: `
-            <div style="font-family: sans-serif; padding: 20px; background-color: #070609; color: #ffffff;">
-              <h2 style="color: #00e5ff;">Nueva orden de entrega manual</h2>
-              <p>El usuario ha pagado con su saldo virtual. Ingresa a Free Fire y envía este regalo al jugador:</p>
-              <div style="background-color: #110f16; padding: 15px; border-left: 4px solid #ffb703; margin: 20px 0;">
-                <p><strong>ID Orden:</strong> ${order.id}</p>
-                <p><strong>Cliente:</strong> ${user.email}</p>
-                <p><strong>ID Jugador (Destino):</strong> <span style="font-size: 18px; color: #ffb703;">${playerId}</span></p>
-                <p><strong>Nickname (Destino):</strong> ${nickname}</p>
-                <p><strong>Producto:</strong> ${productCode}</p>
-                <p><strong>Ganancia:</strong> S/ ${numPrice.toFixed(2)}</p>
+            <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #070609; color: #ffffff; max-width: 600px; margin: 0 auto; border: 1px solid #1f1a29;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 2px;">IM<span style="color: #ff2a1f;">SHOP</span></h1>
               </div>
-              <p>Recuerda actualizar el estado de la orden en tu panel de administración al terminar.</p>
+              
+              <h2 style="color: #ffb703; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; font-size: 20px;">Orden de Entrega: ${tipoManual}</h2>
+              <p style="color: #a1a1aa; font-size: 14px; line-height: 1.5;">El usuario ha pagado con su saldo virtual. Ingresa a Free Fire y envía este regalo al jugador:</p>
+              
+              <div style="background-color: #110f16; padding: 20px; border-left: 4px solid #ffb703; margin: 25px 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding-bottom: 15px; color: #a1a1aa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; width: 40%;">ID Orden</td>
+                    <td style="padding-bottom: 15px; font-weight: bold; font-family: monospace; font-size: 14px;">${order.id}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-bottom: 15px; color: #a1a1aa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Cliente</td>
+                    <td style="padding-bottom: 15px; font-weight: bold; font-size: 14px;">${user.email}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-bottom: 15px; color: #a1a1aa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">ID Destino</td>
+                    <td style="padding-bottom: 15px; font-weight: 900; font-size: 20px; color: #ffb703; font-family: monospace;">${playerId}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-bottom: 15px; color: #a1a1aa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Nickname</td>
+                    <td style="padding-bottom: 15px; font-weight: bold; font-size: 14px;">${nickname}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding-bottom: 15px; color: #a1a1aa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Cód. Producto</td>
+                    <td style="padding-bottom: 15px; font-weight: bold; font-size: 11px; color: #a1a1aa;">${productCode}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #a1a1aa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Ganancia</td>
+                    <td style="font-weight: 900; font-size: 18px; color: #00e5ff; font-family: monospace;">S/ ${numPrice.toFixed(2)}</td>
+                  </tr>
+                </table>
+              </div>
+              
+              <p style="color: #a1a1aa; font-size: 14px; margin-bottom: 25px;">Recuerda actualizar el estado de la orden en tu panel de administración al terminar de enviar el regalo.</p>
+              <a href="https://www.imshop.games/admin" style="display: inline-block; padding: 14px 28px; background-color: #ffb703; color: #000000; text-decoration: none; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;">Ir al Panel Admin</a>
             </div>
           `,
         })

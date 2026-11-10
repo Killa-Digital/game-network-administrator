@@ -11,6 +11,7 @@ import {
   Loader2,
   QrCode,
   ShieldCheck,
+  Trash2,
   Upload,
   Wallet,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ import { supabase } from '@/lib/supabase'
 export default function WalletPage() {
   const [amount, setAmount] = useState<number | ''>('')
   const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -51,9 +53,22 @@ export default function WalletPage() {
         setError('La imagen no puede pesar más de 5MB')
         return
       }
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
       setFile(selected)
+      setPreviewUrl(URL.createObjectURL(selected))
       setError('')
     }
+  }
+
+  const handleRemoveFile = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+    setFile(null)
+    setPreviewUrl(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -238,6 +253,10 @@ export default function WalletPage() {
                       </div>
                     </div>
 
+                    {paymentMethod === 'yape' && (
+                      <p className="text-sm font-black text-white tracking-wide mb-5">910233265</p>
+                    )}
+
                     <button
                       onClick={downloadQR}
                       className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#00e5ff] hover:text-white border-b border-[#00e5ff]/30 hover:border-white transition-colors pb-0.5 cursor-pointer"
@@ -296,7 +315,9 @@ export default function WalletPage() {
                       min="10"
                       step="0.01"
                       value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
+                      onChange={(e) =>
+                        setAmount(e.target.value === '' ? '' : Number(e.target.value))
+                      }
                       placeholder="10.00"
                       className="w-full pl-12 pr-4 py-4 bg-[#070609] border-2 border-white/15 outline-none focus:border-primary focus:shadow-[4px_4px_0px_#ff2a1f] transition-all text-white font-black text-xl tracking-wider placeholder:text-zinc-700 font-mono"
                       disabled={loading}
@@ -308,34 +329,80 @@ export default function WalletPage() {
                   <label className="block text-[11px] font-black text-zinc-400 mb-3 uppercase tracking-[0.25em]">
                     2. Captura de Pantalla
                   </label>
-                  <label
-                    className={`w-full h-40 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-primary bg-primary/5' : 'border-white/20 hover:border-white/40 bg-[#070609]'}`}
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileChange}
-                      disabled={loading}
-                    />
-                    {file ? (
-                      <div className="text-center">
-                        <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-2" />
-                        <p className="text-xs font-black text-white uppercase tracking-widest">
-                          {file.name}
-                        </p>
-                        <p className="text-[10px] text-zinc-500 mt-1">Clic para cambiar</p>
+
+                  {file && previewUrl ? (
+                    <div className="w-full bg-[#070609] border-2 border-primary p-4 shadow-[4px_4px_0px_#ff2a1f] flex flex-col gap-3 relative animate-in fade-in">
+                      <div className="flex items-center gap-2 text-primary border-b border-primary/20 pb-2">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                          Comprobante cargado correctamente
+                        </span>
                       </div>
-                    ) : (
+
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-black border-2 border-white/20 shrink-0 overflow-hidden relative">
+                          <img
+                            src={previewUrl}
+                            alt="Previsualización"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-black text-white uppercase tracking-wider truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                            {(file.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <label
+                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-widest border border-white/20 transition-colors cursor-pointer"
+                            title="Cambiar imagen"
+                          >
+                            Cambiar
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onClick={(e) => ((e.target as HTMLInputElement).value = '')}
+                              onChange={handleFileChange}
+                              disabled={loading}
+                            />
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={handleRemoveFile}
+                            disabled={loading}
+                            className="p-1.5 bg-[#ff2a1f]/10 hover:bg-[#ff2a1f]/20 border border-[#ff2a1f]/40 text-[#ff2a1f] transition-colors cursor-pointer"
+                            title="Quitar imagen"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="w-full h-40 border-2 border-dashed border-white/20 hover:border-white/40 bg-[#070609] flex flex-col items-center justify-center cursor-pointer transition-all group">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        disabled={loading}
+                      />
                       <div className="text-center">
-                        <ImageIcon className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
-                        <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">
+                        <ImageIcon className="w-8 h-8 text-zinc-500 group-hover:text-primary mx-auto mb-2 transition-colors" />
+                        <p className="text-xs font-black text-zinc-400 group-hover:text-white uppercase tracking-widest transition-colors">
                           SUBIR COMPROBANTE
                         </p>
                         <p className="text-[10px] text-zinc-600 mt-1">JPG o PNG (Máx 5MB)</p>
                       </div>
-                    )}
-                  </label>
+                    </label>
+                  )}
                 </div>
 
                 {error && (

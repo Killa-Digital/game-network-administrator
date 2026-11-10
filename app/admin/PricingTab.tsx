@@ -5,14 +5,17 @@ import {
   Box,
   ChevronDown,
   ChevronUp,
+  Crown,
   Eye,
   EyeOff,
   Gamepad2,
   Layers,
+  Pencil,
   Plus,
   Puzzle,
   Save,
   Trash2,
+  X,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Notification from '@/components/Notification'
@@ -53,7 +56,7 @@ export default function PricingTab({
   const [selectedNativeItem, setSelectedNativeItem] = useState('')
   const [manualName, setManualName] = useState('')
   const [manualPrice, setManualPrice] = useState('')
-  const [manualType, setManualType] = useState<'fragment' | 'box'>('fragment')
+  const [manualType, setManualType] = useState<'fragment' | 'box' | 'passe'>('fragment')
 
   // Estados de control para colapsar/expandir las secciones de cada juego
   const [openSections, setOpenSections] = useState<
@@ -77,6 +80,13 @@ export default function PricingTab({
   const [editingManualCode, setEditingManualCode] = useState<string | null>(null)
   const [editManualName, setEditManualName] = useState('')
   const [editManualPrice, setEditManualPrice] = useState('')
+
+  // Estado para editar combos personalizados en línea
+  const [editingComboCode, setEditingComboCode] = useState<string | null>(null)
+  const [editComboName, setEditComboName] = useState('')
+  const [editComboPrice, setEditComboPrice] = useState('')
+  const [editComboItems, setEditComboItems] = useState<string[]>([])
+  const [editSelectedNativeItem, setEditSelectedNativeItem] = useState('')
 
   const saveCombo = async (gameSlug: string) => {
     if (!comboName || !comboPrice || comboItems.length < 2) {
@@ -317,45 +327,258 @@ export default function PricingTab({
                     {sectionsState.combos && (
                       <div className="pt-4">
                         {combos.length > 0 && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                            {combos.map((combo) => (
-                              <div
-                                key={combo.product_code}
-                                className={`p-4 border-2 ${combo.is_active ? 'border-[#ffb703] bg-[#ffb703]/5' : 'border-white/10 opacity-50'} flex justify-between items-center`}
-                              >
-                                <div>
-                                  <p className="font-black uppercase text-sm text-white">
-                                    {combo.custom_name}
-                                  </p>
-                                  <p className="text-[10px] text-zinc-500 font-mono mt-1">
-                                    Inyecciones: {combo.combo_items?.length}
-                                  </p>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+                            {combos.map((combo) => {
+                              const isEditing = editingComboCode === combo.product_code
+
+                              return (
+                                <div
+                                  key={combo.product_code}
+                                  className={`p-4 border-2 ${combo.is_active ? 'border-[#ffb703] bg-[#ffb703]/5' : 'border-white/10 opacity-50'} flex flex-col justify-center`}
+                                >
+                                  {isEditing ? (
+                                    // MODO EDICIÓN
+                                    <div className="flex flex-col gap-4 animate-in fade-in">
+                                      <div className="flex flex-col sm:flex-row gap-3">
+                                        <div className="flex-1">
+                                          <label className="text-[9px] font-black text-[#ffb703] uppercase tracking-widest mb-1 block">
+                                            Nombre del Combo
+                                          </label>
+                                          <input
+                                            type="text"
+                                            value={editComboName}
+                                            onChange={(e) => setEditComboName(e.target.value)}
+                                            className="w-full bg-[#070609] border border-[#ffb703]/50 px-3 py-2 text-xs font-bold text-white outline-none focus:border-[#ffb703]"
+                                          />
+                                        </div>
+                                        <div className="w-full sm:w-32">
+                                          <label className="text-[9px] font-black text-[#ffb703] uppercase tracking-widest mb-1 block">
+                                            Precio (S/)
+                                          </label>
+                                          <input
+                                            type="number"
+                                            step="0.10"
+                                            value={editComboPrice}
+                                            onChange={(e) => setEditComboPrice(e.target.value)}
+                                            className="w-full bg-[#070609] border border-[#ffb703]/50 px-3 py-2 text-xs font-black font-mono text-[#ffb703] outline-none focus:border-[#ffb703]"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      <div className="bg-black/30 p-3 border border-white/5">
+                                        <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2 block">
+                                          Inyecciones (Paquetes)
+                                        </label>
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                          {editComboItems.map((item, idx) => {
+                                            const [, , sku] = item.split('___')
+                                            const prodName =
+                                              catalogData.products.find((p: any) => p.sku === sku)
+                                                ?.name || sku
+                                            return (
+                                              <span
+                                                key={idx}
+                                                className="bg-primary/20 border border-primary/50 text-white text-[10px] font-black px-2 py-1 flex items-center gap-2 rounded-sm"
+                                              >
+                                                {prodName}
+                                                <X
+                                                  className="w-3 h-3 text-[#ff2a1f] cursor-pointer hover:scale-125 transition-transform"
+                                                  onClick={() =>
+                                                    setEditComboItems(
+                                                      editComboItems.filter((_, i) => i !== idx)
+                                                    )
+                                                  }
+                                                />
+                                              </span>
+                                            )
+                                          })}
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <select
+                                            value={editSelectedNativeItem}
+                                            onChange={(e) =>
+                                              setEditSelectedNativeItem(e.target.value)
+                                            }
+                                            className="flex-1 bg-[#070609] border border-white/15 px-2 py-1 text-[10px] font-bold text-white outline-none"
+                                          >
+                                            <option value="">-- Añadir paquete --</option>
+                                            {catalogData.products.map((p: any) => (
+                                              <option
+                                                key={p.sku}
+                                                value={`${getCodeType(p.name)}___${p.productId}___${p.sku}`}
+                                              >
+                                                {p.name}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <button
+                                            onClick={() => {
+                                              if (editSelectedNativeItem) {
+                                                setEditComboItems([
+                                                  ...editComboItems,
+                                                  editSelectedNativeItem,
+                                                ])
+                                                setEditSelectedNativeItem('')
+                                              }
+                                            }}
+                                            className="bg-white/10 hover:bg-white/20 text-white px-3 text-[10px] font-black uppercase border border-white/20 transition-colors cursor-pointer"
+                                          >
+                                            Sumar
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+                                        <button
+                                          onClick={() => setEditingComboCode(null)}
+                                          className="px-3 py-1.5 text-[10px] font-black text-zinc-400 hover:text-white uppercase tracking-widest transition-colors cursor-pointer"
+                                        >
+                                          Cancelar
+                                        </button>
+                                        <button
+                                          onClick={async () => {
+                                            if (
+                                              !editComboName ||
+                                              !editComboPrice ||
+                                              editComboItems.length < 2
+                                            ) {
+                                              return setNotify({
+                                                isVisible: true,
+                                                message:
+                                                  'Falta nombre, precio o al menos 2 paquetes.',
+                                                type: 'error',
+                                              })
+                                            }
+                                            const { error } = await supabase
+                                              .from('product_config')
+                                              .update({
+                                                custom_name: editComboName,
+                                                price_pen: Number(editComboPrice),
+                                                combo_items: editComboItems,
+                                              })
+                                              .eq('product_code', combo.product_code)
+
+                                            if (error) {
+                                              setNotify({
+                                                isVisible: true,
+                                                message: 'Error al actualizar',
+                                                type: 'error',
+                                              })
+                                            } else {
+                                              setNotify({
+                                                isVisible: true,
+                                                message: 'Combo actualizado',
+                                                type: 'success',
+                                              })
+                                              setEditingComboCode(null)
+                                              refreshConfigs()
+                                            }
+                                          }}
+                                          className="bg-[#ffb703] text-black px-4 py-1.5 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2 cursor-pointer"
+                                        >
+                                          <Save className="w-3.5 h-3.5" /> Guardar Combo
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    // MODO VISTA NORMAL
+                                    <div className="flex justify-between items-start">
+                                      <div className="flex-1">
+                                        <p className="font-black uppercase text-sm text-white">
+                                          {combo.custom_name}
+                                        </p>
+                                        <div className="text-[10px] text-zinc-400 font-mono mt-2 flex flex-col gap-1">
+                                          <span className="text-[#ffb703] font-bold">
+                                            Inyecciones ({combo.combo_items?.length || 0}):
+                                          </span>
+                                          {combo.combo_items?.map((item: string, idx: number) => {
+                                            const [, , sku] = item.split('___')
+                                            const prodName =
+                                              catalogData.products.find((p: any) => p.sku === sku)
+                                                ?.name || sku
+                                            return <span key={idx}>- {prodName}</span>
+                                          })}
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-3 shrink-0">
+                                        <p className="font-black text-[#ffb703] text-xl font-mono">
+                                          S/ {combo.price_pen.toFixed(2)}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                          {/* Ojito - Ocultar/Mostrar */}
+                                          <button
+                                            onClick={() =>
+                                              handlePriceChange(
+                                                combo.product_code,
+                                                'is_active',
+                                                !combo.is_active
+                                              )
+                                            }
+                                            className={`p-2 border-2 transition-colors cursor-pointer ${combo.is_active ? 'text-[#00e5ff] border-[#00e5ff]/40 bg-[#00e5ff]/10' : 'text-zinc-500 border-white/10 hover:text-white'}`}
+                                            title="Ocultar/Mostrar"
+                                          >
+                                            {combo.is_active ? (
+                                              <Eye className="w-4 h-4" />
+                                            ) : (
+                                              <EyeOff className="w-4 h-4" />
+                                            )}
+                                          </button>
+
+                                          {/* Lápiz - Editar */}
+                                          <button
+                                            onClick={() => {
+                                              setEditingComboCode(combo.product_code)
+                                              setEditComboName(combo.custom_name || '')
+                                              setEditComboPrice(combo.price_pen?.toString() || '')
+                                              setEditComboItems(combo.combo_items || [])
+                                            }}
+                                            className="p-2 border-2 border-white/10 text-zinc-400 hover:text-[#ffb703] hover:border-[#ffb703]/40 hover:bg-[#ffb703]/10 transition-colors cursor-pointer"
+                                            title="Editar Combo"
+                                          >
+                                            <Pencil className="w-4 h-4" />
+                                          </button>
+
+                                          {/* Basurero - Eliminar permanentemente */}
+                                          <button
+                                            onClick={async () => {
+                                              if (
+                                                window.confirm(
+                                                  '¿Estás seguro de que deseas eliminar este combo permanentemente?'
+                                                )
+                                              ) {
+                                                const { error } = await supabase
+                                                  .from('product_config')
+                                                  .delete()
+                                                  .eq('product_code', combo.product_code)
+
+                                                if (!error) {
+                                                  setNotify({
+                                                    isVisible: true,
+                                                    message: 'Combo eliminado de la base de datos',
+                                                    type: 'success',
+                                                  })
+                                                  refreshConfigs()
+                                                } else {
+                                                  setNotify({
+                                                    isVisible: true,
+                                                    message: 'Error al eliminar',
+                                                    type: 'error',
+                                                  })
+                                                }
+                                              }
+                                            }}
+                                            className="p-2 border-2 border-white/10 text-zinc-400 hover:text-[#ff2a1f] hover:border-[#ff2a1f]/40 hover:bg-[#ff2a1f]/10 transition-colors cursor-pointer"
+                                            title="Eliminar Combo"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="text-right">
-                                  <p className="font-black text-primary font-mono">
-                                    S/ {combo.price_pen}
-                                  </p>
-                                  <button
-                                    onClick={() =>
-                                      handlePriceChange(
-                                        combo.product_code,
-                                        'is_active',
-                                        !combo.is_active
-                                      )
-                                    }
-                                    className="text-[9px] uppercase tracking-widest text-zinc-400 hover:text-white mt-1 border-b border-zinc-600 block"
-                                  >
-                                    Ocultar/Mostrar
-                                  </button>
-                                  <button
-                                    onClick={() => handleSavePrice(combo.product_code, game.slug)}
-                                    className="text-[9px] uppercase tracking-widest text-[#00e5ff] hover:text-white border-b border-[#00e5ff]/50 cursor-pointer mt-1"
-                                  >
-                                    Guardar Estado
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         )}
 
@@ -480,7 +703,9 @@ export default function PricingTab({
                             </label>
                             <select
                               value={manualType}
-                              onChange={(e) => setManualType(e.target.value as 'fragment' | 'box')}
+                              onChange={(e) =>
+                                setManualType(e.target.value as 'fragment' | 'box' | 'passe')
+                              }
                               className="w-full bg-[#070609] border-2 border-white/15 px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#00e5ff] cursor-pointer"
                             >
                               <option value="fragment">Fragmentos</option>
@@ -530,7 +755,11 @@ export default function PricingTab({
 
                                   if (error) alert('Error al guardar: ' + error.message)
                                   else {
-                                    alert('Producto creado con éxito')
+                                    setNotify({
+                                      isVisible: true,
+                                      message: 'Producto manual creado con éxito',
+                                      type: 'success',
+                                    })
                                     setManualName('')
                                     setManualPrice('')
                                     refreshConfigs()
@@ -544,117 +773,238 @@ export default function PricingTab({
                           </div>
                         </div>
 
-                        {/* Lista de Productos Manuales Creados (Con Edición de Cantidad/Nombre y Precio) */}
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-black text-[#00e5ff] uppercase tracking-[0.2em] mb-3">
-                            Productos Manuales Activos
-                          </label>
+                        {/* Lista de Productos Manuales Creados (Agrupados) */}
+                        <div className="mt-8 pt-6 border-t-2 border-white/5">
+                          <h4 className="text-[11px] font-black text-white uppercase tracking-[0.2em] mb-6">
+                            Inventario de Productos Manuales
+                          </h4>
 
-                          {Object.values(productConfigs)
-                            .filter((p: any) => p.game_slug === selectedGameTab && p.manual_type)
-                            .map((pkg: any) => {
-                              const isEditing = editingManualCode === pkg.product_code
+                          {[
+                            {
+                              id: 'fragment',
+                              title: 'Fragmentos',
+                              icon: Puzzle,
+                              items: Object.values(productConfigs).filter(
+                                (p: any) =>
+                                  p.game_slug === selectedGameTab && p.manual_type === 'fragment'
+                              ),
+                            },
+                            {
+                              id: 'box',
+                              title: 'Cajas Tokens',
+                              icon: Box,
+                              items: Object.values(productConfigs).filter(
+                                (p: any) =>
+                                  p.game_slug === selectedGameTab && p.manual_type === 'box'
+                              ),
+                            },
+                            {
+                              id: 'passe',
+                              title: 'Pases Booyah',
+                              icon: Crown,
+                              items: Object.values(productConfigs).filter(
+                                (p: any) =>
+                                  p.game_slug === selectedGameTab && p.manual_type === 'passe'
+                              ),
+                            },
+                          ].map((group) => {
+                            if (group.items.length === 0) return null
 
-                              return (
-                                <div
-                                  key={pkg.product_code}
-                                  className="flex items-center justify-between bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors gap-4"
-                                >
-                                  {isEditing ? (
-                                    <div className="flex-1 flex items-center gap-3">
-                                      <input
-                                        type="text"
-                                        value={editManualName}
-                                        onChange={(e) => setEditManualName(e.target.value)}
-                                        className="bg-[#070609] border border-[#00e5ff] px-2 py-1 text-xs font-bold text-white outline-none w-full max-w-xs uppercase"
-                                      />
-                                      <div className="relative w-28">
-                                        <span className="absolute left-2 top-1 text-xs text-zinc-400">
-                                          S/
-                                        </span>
-                                        <input
-                                          type="number"
-                                          step="0.10"
-                                          value={editManualPrice}
-                                          onChange={(e) => setEditManualPrice(e.target.value)}
-                                          className="w-full bg-[#070609] border border-[#00e5ff] pl-6 pr-2 py-1 text-xs font-black font-mono text-[#ffb703] outline-none"
-                                        />
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center gap-3">
-                                      {pkg.manual_type === 'fragment' ? (
-                                        <Puzzle className="w-4 h-4 text-[#00e5ff]" />
-                                      ) : (
-                                        <Box className="w-4 h-4 text-[#00e5ff]" />
-                                      )}
-                                      <span className="font-black text-sm uppercase tracking-wide text-white">
-                                        {pkg.manual_name}
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  <div className="flex items-center gap-4">
-                                    {!isEditing && (
-                                      <span className="text-[#ffb703] font-black font-mono">
-                                        S/ {pkg.price_pen.toFixed(2)}
-                                      </span>
-                                    )}
-
-                                    {isEditing ? (
-                                      <button
-                                        onClick={async () => {
-                                          if (!editManualName || !editManualPrice)
-                                            return alert('Completa los campos')
-                                          const { error } = await supabase
-                                            .from('product_config')
-                                            .update({
-                                              manual_name: editManualName,
-                                              price_pen: Number(editManualPrice),
-                                            })
-                                            .eq('product_code', pkg.product_code)
-
-                                          if (error) alert('Error al actualizar: ' + error.message)
-                                          else {
-                                            setEditingManualCode(null)
-                                            refreshConfigs()
-                                          }
-                                        }}
-                                        className="bg-[#00e5ff] text-black px-3 py-1 text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1"
-                                      >
-                                        <Save className="w-3.5 h-3.5" /> Guardar
-                                      </button>
-                                    ) : (
-                                      <button
-                                        onClick={() => {
-                                          setEditingManualCode(pkg.product_code)
-                                          setEditManualName(pkg.manual_name || '')
-                                          setEditManualPrice(pkg.price_pen || '')
-                                        }}
-                                        className="text-[10px] uppercase font-bold tracking-widest text-[#00e5ff] hover:underline cursor-pointer"
-                                      >
-                                        Editar
-                                      </button>
-                                    )}
-
-                                    {/* Botón para desactivar / eliminar lógicamente */}
-                                    <button
-                                      onClick={async () => {
-                                        const { error } = await supabase
-                                          .from('product_config')
-                                          .update({ is_active: false })
-                                          .eq('product_code', pkg.product_code)
-                                        if (!error) refreshConfigs()
-                                      }}
-                                      className="text-zinc-500 hover:text-[#ff2a1f] transition-colors p-1 cursor-pointer"
-                                      title="Ocultar de la tienda"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
+                            return (
+                              <div key={group.id} className="mb-6 last:mb-0 animate-in fade-in">
+                                {/* Subtítulo de la Categoría */}
+                                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#00e5ff]/20">
+                                  <group.icon className="w-4 h-4 text-[#00e5ff]" />
+                                  <label className="text-[10px] font-black text-[#00e5ff] uppercase tracking-[0.2em]">
+                                    {group.title}
+                                  </label>
+                                  <span className="text-[9px] font-bold text-zinc-500 bg-white/5 px-2 py-0.5 ml-2 border border-white/5">
+                                    {group.items.length}{' '}
+                                    {group.items.length === 1 ? 'creado' : 'creados'}
+                                  </span>
                                 </div>
-                              )
-                            })}
+
+                                {/* Elementos de la Categoría */}
+                                <div className="space-y-2">
+                                  {group.items.map((pkg: any) => {
+                                    const isEditing = editingManualCode === pkg.product_code
+
+                                    return (
+                                      <div
+                                        key={pkg.product_code}
+                                        className={`flex items-center justify-between bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors gap-4 ${
+                                          pkg.is_active ? '' : 'opacity-40 grayscale'
+                                        }`}
+                                      >
+                                        {isEditing ? (
+                                          <div className="flex-1 flex items-center gap-3">
+                                            <input
+                                              type="text"
+                                              value={editManualName}
+                                              onChange={(e) => setEditManualName(e.target.value)}
+                                              className="bg-[#070609] border border-[#00e5ff] px-2 py-1 text-xs font-bold text-white outline-none w-full max-w-xs uppercase"
+                                            />
+                                            <div className="relative w-28">
+                                              <span className="absolute left-2 top-1 text-xs text-zinc-400">
+                                                S/
+                                              </span>
+                                              <input
+                                                type="number"
+                                                step="0.10"
+                                                value={editManualPrice}
+                                                onChange={(e) => setEditManualPrice(e.target.value)}
+                                                className="w-full bg-[#070609] border border-[#00e5ff] pl-6 pr-2 py-1 text-xs font-black font-mono text-[#ffb703] outline-none"
+                                              />
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-3">
+                                            <group.icon className="w-4 h-4 text-[#00e5ff]" />
+                                            <span className="font-black text-sm uppercase tracking-wide text-white">
+                                              {pkg.manual_name}
+                                            </span>
+                                          </div>
+                                        )}
+
+                                        <div className="flex items-center gap-4">
+                                          {!isEditing && (
+                                            <span className="text-[#ffb703] font-black font-mono">
+                                              S/ {Number(pkg.price_pen).toFixed(2)}
+                                            </span>
+                                          )}
+
+                                          {isEditing ? (
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                onClick={() => setEditingManualCode(null)}
+                                                className="p-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                                title="Cancelar"
+                                              >
+                                                <X className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                onClick={async () => {
+                                                  if (!editManualName || !editManualPrice)
+                                                    return alert('Completa los campos')
+                                                  const { error } = await supabase
+                                                    .from('product_config')
+                                                    .update({
+                                                      manual_name: editManualName,
+                                                      price_pen: Number(editManualPrice),
+                                                    })
+                                                    .eq('product_code', pkg.product_code)
+
+                                                  if (error) {
+                                                    setNotify({
+                                                      isVisible: true,
+                                                      message: 'Error al actualizar',
+                                                      type: 'error',
+                                                    })
+                                                  } else {
+                                                    setEditingManualCode(null)
+                                                    setNotify({
+                                                      isVisible: true,
+                                                      message: 'Producto manual actualizado',
+                                                      type: 'success',
+                                                    })
+                                                    refreshConfigs()
+                                                  }
+                                                }}
+                                                className="bg-[#00e5ff] text-black px-3 py-1 text-[10px] font-black uppercase tracking-widest cursor-pointer flex items-center gap-1 hover:bg-white transition-colors"
+                                              >
+                                                <Save className="w-3.5 h-3.5" /> Guardar
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center gap-2">
+                                              {/* Ojito - Ocultar/Mostrar */}
+                                              <button
+                                                onClick={async () => {
+                                                  const { error } = await supabase
+                                                    .from('product_config')
+                                                    .update({ is_active: !pkg.is_active })
+                                                    .eq('product_code', pkg.product_code)
+                                                  if (!error) refreshConfigs()
+                                                }}
+                                                className={`p-2 border-2 transition-colors cursor-pointer ${
+                                                  pkg.is_active
+                                                    ? 'text-[#00e5ff] border-[#00e5ff]/40 bg-[#00e5ff]/10'
+                                                    : 'text-zinc-500 border-white/10 hover:text-white'
+                                                }`}
+                                                title="Ocultar/Mostrar"
+                                              >
+                                                {pkg.is_active ? (
+                                                  <Eye className="w-4 h-4" />
+                                                ) : (
+                                                  <EyeOff className="w-4 h-4" />
+                                                )}
+                                              </button>
+
+                                              {/* Lápiz - Editar */}
+                                              <button
+                                                onClick={() => {
+                                                  setEditingManualCode(pkg.product_code)
+                                                  setEditManualName(pkg.manual_name || '')
+                                                  setEditManualPrice(pkg.price_pen || '')
+                                                }}
+                                                className="p-2 border-2 border-white/10 text-zinc-400 hover:text-[#00e5ff] hover:border-[#00e5ff]/40 hover:bg-[#00e5ff]/10 transition-colors cursor-pointer"
+                                                title="Editar producto manual"
+                                              >
+                                                <Pencil className="w-4 h-4" />
+                                              </button>
+
+                                              {/* Basurero - Eliminar */}
+                                              <button
+                                                onClick={async () => {
+                                                  if (
+                                                    window.confirm(
+                                                      '¿Estás seguro de que deseas eliminar este producto manual?'
+                                                    )
+                                                  ) {
+                                                    const { error } = await supabase
+                                                      .from('product_config')
+                                                      .delete()
+                                                      .eq('product_code', pkg.product_code)
+                                                    if (!error) {
+                                                      setNotify({
+                                                        isVisible: true,
+                                                        message: 'Producto manual eliminado',
+                                                        type: 'success',
+                                                      })
+                                                      refreshConfigs()
+                                                    } else {
+                                                      setNotify({
+                                                        isVisible: true,
+                                                        message: 'Error al eliminar',
+                                                        type: 'error',
+                                                      })
+                                                    }
+                                                  }
+                                                }}
+                                                className="p-2 border-2 border-white/10 text-zinc-400 hover:text-[#ff2a1f] hover:border-[#ff2a1f]/40 hover:bg-[#ff2a1f]/10 transition-colors cursor-pointer"
+                                                title="Eliminar producto"
+                                              >
+                                                <Trash2 className="w-4 h-4" />
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          })}
+
+                          {/* Mensaje por si no hay absolutamente ningún producto manual */}
+                          {Object.values(productConfigs).filter(
+                            (p: any) => p.game_slug === selectedGameTab && p.manual_type
+                          ).length === 0 && (
+                            <p className="text-xs text-zinc-500 font-bold italic text-center py-6 border border-dashed border-white/10 bg-white/5">
+                              No hay productos manuales creados todavía.
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
