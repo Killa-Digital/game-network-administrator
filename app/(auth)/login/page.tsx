@@ -1,17 +1,62 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight, Crosshair, Loader2, Lock, Mail, UserPlus, XCircle } from 'lucide-react'
 import { IconGoogle } from '@/components/IconGoogle'
+import Notification from '@/components/Notification'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [notify, setNotify] = useState({
+    isVisible: false,
+    message: '',
+    type: 'info' as 'success' | 'error' | 'info',
+  })
   const router = useRouter()
+
+  useEffect(() => {
+    const checkSuspendedSession = async () => {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('error') === 'suspended') {
+        await supabase.auth.signOut()
+        setNotify({
+          isVisible: true,
+          message: 'Tu cuenta ha sido suspendida. Contacta con soporte.',
+          type: 'error',
+        })
+        window.history.replaceState({}, '', '/login')
+        return
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.status === 'suspended') {
+          await supabase.auth.signOut()
+          setNotify({
+            isVisible: true,
+            message: 'Tu cuenta ha sido suspendida. Contacta con soporte.',
+            type: 'error',
+          })
+        }
+      }
+    }
+
+    checkSuspendedSession()
+  }, [])
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,8 +64,27 @@ export default function Login() {
     setError('')
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profile?.status === 'suspended') {
+          await supabase.auth.signOut()
+          setNotify({
+            isVisible: true,
+            message: 'Tu cuenta ha sido suspendida. Contacta con soporte.',
+            type: 'error',
+          })
+          return
+        }
+      }
+
       router.push('/')
     } catch (err: any) {
       setError(err.message || 'Ocurrió un error. Verifica tus credenciales.')
@@ -154,6 +218,13 @@ export default function Login() {
           <UserPlus className="w-3.5 h-3.5 text-[#ff2a1f]" />[ ¿NO TIENES CUENTA? REGÍSTRATE ]
         </Link>
       </div>
+
+      <Notification
+        isVisible={notify.isVisible}
+        message={notify.message}
+        type={notify.type}
+        onClose={() => setNotify((prev) => ({ ...prev, isVisible: false }))}
+      />
     </>
   )
 }

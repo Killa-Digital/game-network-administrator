@@ -29,9 +29,22 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      if (data?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profile?.status === 'suspended') {
+          await supabase.auth.signOut()
+          return NextResponse.redirect(`${origin}/login?error=suspended`)
+        }
+      }
+
       // Redirige limpiamente a la raíz sin parámetros en la URL
       return NextResponse.redirect(`${origin}/`)
     }

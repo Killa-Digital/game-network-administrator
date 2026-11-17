@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import {
+  Ban,
   Check,
+  CheckCircle2,
   DollarSign,
   Edit2,
   History,
@@ -34,6 +36,7 @@ interface UserProfile {
   full_name: string
   phone: string
   balance: number
+  status?: 'active' | 'suspended'
   total_recharged: number
 }
 
@@ -63,6 +66,12 @@ export default function WalletTab() {
     amountValue: string | number
   }>({ isOpen: false, mode: 'reward', user: null, amountValue: '' })
 
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean
+    user: UserProfile | null
+    nextStatus: 'active' | 'suspended'
+  }>({ isOpen: false, user: null, nextStatus: 'suspended' })
+
   const fetchData = async () => {
     setLoading(true)
 
@@ -91,6 +100,7 @@ export default function WalletTab() {
       const rankedUsers = profilesRes.data
         .map((p) => ({
           ...p,
+          status: p.status || 'active',
           total_recharged: totals[p.id] || 0,
         }))
         .sort((a, b) => b.total_recharged - a.total_recharged)
@@ -203,6 +213,57 @@ export default function WalletTab() {
         type: 'success',
       })
       setBalanceModal({ isOpen: false, mode: 'reward', user: null, amountValue: '' })
+    } catch (error) {
+      setNotify({ isVisible: true, message: 'Error de conexión', type: 'error' })
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  const executeStatusChange = async () => {
+    if (!statusModal.user) return
+    const targetUser = statusModal.user
+    const nextStatus = statusModal.nextStatus
+
+    setStatusModal({ isOpen: false, user: null, nextStatus: 'suspended' })
+    setProcessingId(targetUser.id)
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ status: nextStatus })
+        .eq('id', targetUser.id)
+        .select('id, status')
+
+      if (error) {
+        setNotify({
+          isVisible: true,
+          message: error.message || 'Error al actualizar el estado del usuario',
+          type: 'error',
+        })
+        return
+      }
+
+      if (!data || data.length === 0) {
+        setNotify({
+          isVisible: true,
+          message: 'No se pudo actualizar en Supabase (verifica permisos RLS en profiles)',
+          type: 'error',
+        })
+        return
+      }
+
+      setUsers((prev) =>
+        prev.map((u) => (u.id === targetUser.id ? { ...u, status: nextStatus } : u))
+      )
+      setNotify({
+        isVisible: true,
+        message:
+          nextStatus === 'suspended'
+            ? 'Usuario suspendido correctamente'
+            : 'Usuario activado correctamente',
+        type: 'success',
+      })
     } catch (error) {
       setNotify({ isVisible: true, message: 'Error de conexión', type: 'error' })
     } finally {
@@ -401,41 +462,43 @@ export default function WalletTab() {
           </div>
 
           <div className="bg-[#110f16] border-2 border-white/20 overflow-x-auto shadow-[6px_6px_0px_#1f1a29] custom-scrollbar">
-            <table className="w-full text-left border-collapse min-w-[850px]">
+            <table className="w-full text-left border-collapse min-w-[980px]">
               <thead>
-                <tr className="bg-[#0a080d] border-b-2 border-[#00e5ff]">
-                  <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 w-16 text-center">
-                    Rango
-                  </th>
-                  <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                    Cliente / Email
-                  </th>
-                  <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                    Telefono
-                  </th>
-                  <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-right">
-                    Saldo Actual
-                  </th>
-                  <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#00e5ff] text-right">
-                    Total Histórico
-                  </th>
-                  <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-center">
-                    Acción
-                  </th>
-                </tr>
+              <tr className="bg-[#0a080d] border-b-2 border-[#00e5ff]">
+                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 w-16 text-center">
+                  Rango
+                </th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                  Cliente / Email
+                </th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                  Telefono
+                </th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-right">
+                  Saldo Actual
+                </th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#00e5ff] text-right">
+                  Total Histórico
+                </th>
+                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-center">
+                  Acción
+                </th>
+              </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="p-8 text-center text-zinc-500 text-xs font-black uppercase tracking-widest"
-                    >
-                      No se encontraron clientes.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((user) => (
+              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="p-8 text-center text-zinc-500 text-xs font-black uppercase tracking-widest"
+                  >
+                    No se encontraron clientes.
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => {
+                  const isSuspended = user.status === 'suspended'
+                  return (
                     <tr key={user.id} className="hover:bg-white/[0.03] transition-colors">
                       <td className="p-4 align-middle text-center">
                         {user.rankIndex === 0 ? (
@@ -446,14 +509,25 @@ export default function WalletTab() {
                           <Trophy className="w-4 h-4 text-[#cd7f32] mx-auto" />
                         ) : (
                           <span className="text-zinc-500 font-mono text-sm">
-                            #{user.rankIndex + 1}
-                          </span>
+                              #{user.rankIndex + 1}
+                            </span>
                         )}
                       </td>
                       <td className="p-4 align-middle">
-                        <p className="text-sm font-bold text-white">
-                          {user.full_name || 'Sin Nombre'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-white">
+                            {user.full_name || 'Sin Nombre'}
+                          </p>
+                          {isSuspended ? (
+                            <span className="text-[#ff2a1f] bg-[#ff2a1f]/10 border border-[#ff2a1f]/40 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                                Suspendido
+                              </span>
+                          ) : (
+                            <span className="text-[#00e5ff] bg-[#00e5ff]/10 border border-[#00e5ff]/40 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest">
+                                Activo
+                              </span>
+                          )}
+                        </div>
                         <p className="text-xs text-zinc-400 font-mono">{user.email}</p>
                       </td>
                       <td className="p-4 align-middle">
@@ -495,11 +569,37 @@ export default function WalletTab() {
                           >
                             <Edit2 className="w-3 h-3" /> Editar Saldo
                           </button>
+                          <button
+                            onClick={() =>
+                              setStatusModal({
+                                isOpen: true,
+                                user,
+                                nextStatus: isSuspended ? 'active' : 'suspended',
+                              })
+                            }
+                            disabled={processingId === user.id}
+                            className={`px-3 py-2 border transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                              isSuspended
+                                ? 'bg-[#00e5ff]/10 border-[#00e5ff]/40 hover:bg-[#00e5ff] text-[#00e5ff] hover:text-black'
+                                : 'bg-[#ff2a1f]/10 border-[#ff2a1f]/40 hover:bg-[#ff2a1f] text-[#ff2a1f] hover:text-white'
+                            }`}
+                          >
+                            {isSuspended ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3" /> Activar
+                              </>
+                            ) : (
+                              <>
+                                <Ban className="w-3 h-3" /> Suspender
+                              </>
+                            )}
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
+                  )
+                })
+              )}
               </tbody>
             </table>
           </div>
@@ -508,70 +608,70 @@ export default function WalletTab() {
         <div className="bg-[#110f16] border-2 border-white/20 overflow-x-auto shadow-[6px_6px_0px_#1f1a29] custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-[#0a080d] border-b-2 border-primary">
-                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                  Estado
-                </th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                  Fecha
-                </th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                  Cliente (Email)
-                </th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-right">
-                  Monto
-                </th>
-                <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-center">
-                  Comprobante
-                </th>
-              </tr>
+            <tr className="bg-[#0a080d] border-b-2 border-primary">
+              <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                Estado
+              </th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                Fecha
+              </th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                Cliente (Email)
+              </th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-right">
+                Monto
+              </th>
+              <th className="p-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 text-center">
+                Comprobante
+              </th>
+            </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
-              {historyRequests.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="p-8 text-center text-zinc-500 text-xs font-black uppercase tracking-widest"
-                  >
-                    Aún no hay registros.
-                  </td>
-                </tr>
-              ) : (
-                historyRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-white/[0.03] transition-colors">
-                    <td className="p-4 align-middle">
-                      {req.status === 'approved' ? (
-                        <span className="text-[#00e5ff] bg-[#00e5ff]/10 border border-[#00e5ff]/40 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+            {historyRequests.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="p-8 text-center text-zinc-500 text-xs font-black uppercase tracking-widest"
+                >
+                  Aún no hay registros.
+                </td>
+              </tr>
+            ) : (
+              historyRequests.map((req) => (
+                <tr key={req.id} className="hover:bg-white/[0.03] transition-colors">
+                  <td className="p-4 align-middle">
+                    {req.status === 'approved' ? (
+                      <span className="text-[#00e5ff] bg-[#00e5ff]/10 border border-[#00e5ff]/40 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
                           <Check className="w-3 h-3 inline mr-1" /> Aprobado
                         </span>
-                      ) : (
-                        <span className="text-[#ff2a1f] bg-[#ff2a1f]/10 border border-[#ff2a1f]/40 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
+                    ) : (
+                      <span className="text-[#ff2a1f] bg-[#ff2a1f]/10 border border-[#ff2a1f]/40 px-2 py-1 text-[10px] font-black uppercase tracking-widest">
                           <X className="w-3 h-3 inline mr-1" /> Rechazado
                         </span>
-                      )}
-                    </td>
-                    <td className="p-4 align-middle text-xs font-mono text-zinc-300">
-                      {new Date(req.created_at).toLocaleString()}
-                    </td>
-                    <td className="p-4 align-middle text-sm font-bold text-white">
-                      {req.profiles?.email || 'Desconocido'}
-                    </td>
-                    <td className="p-4 align-middle text-right text-lg font-black text-primary font-mono">
-                      S/ {req.amount.toFixed(2)}
-                    </td>
-                    <td className="p-4 align-middle text-center">
-                      <a
-                        href={req.receipt_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-block p-2 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-zinc-400 hover:text-white"
-                      >
-                        <ImageIcon className="w-4 h-4" />
-                      </a>
-                    </td>
-                  </tr>
-                ))
-              )}
+                    )}
+                  </td>
+                  <td className="p-4 align-middle text-xs font-mono text-zinc-300">
+                    {new Date(req.created_at).toLocaleString()}
+                  </td>
+                  <td className="p-4 align-middle text-sm font-bold text-white">
+                    {req.profiles?.email || 'Desconocido'}
+                  </td>
+                  <td className="p-4 align-middle text-right text-lg font-black text-primary font-mono">
+                    S/ {req.amount.toFixed(2)}
+                  </td>
+                  <td className="p-4 align-middle text-center">
+                    <a
+                      href={req.receipt_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block p-2 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-zinc-400 hover:text-white"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                    </a>
+                  </td>
+                </tr>
+              ))
+            )}
             </tbody>
           </table>
         </div>
@@ -673,6 +773,16 @@ export default function WalletTab() {
         type={modal.action === 'approve' ? 'warning' : 'danger'}
         onConfirm={executeAction}
         onCancel={() => setModal({ isOpen: false, action: null, reqData: null })}
+      />
+      <ConfirmModal
+        isOpen={statusModal.isOpen}
+        title={statusModal.nextStatus === 'suspended' ? 'Suspender Usuario' : 'Activar Usuario'}
+        message={`¿Estás seguro de ${statusModal.nextStatus === 'suspended' ? 'SUSPENDER' : 'ACTIVAR'} la cuenta de ${statusModal.user?.email}?`}
+        confirmText={statusModal.nextStatus === 'suspended' ? 'SÍ, SUSPENDER' : 'SÍ, ACTIVAR'}
+        cancelText="CANCELAR"
+        type={statusModal.nextStatus === 'suspended' ? 'danger' : 'warning'}
+        onConfirm={executeStatusChange}
+        onCancel={() => setStatusModal({ isOpen: false, user: null, nextStatus: 'suspended' })}
       />
     </div>
   )
