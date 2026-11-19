@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+const EXCLUDED_USER_IDS = new Set(['12ae1230-f9a6-44f8-9cdb-eb6881a7402d'])
 
+const maskName = (fullName?: string | null, email?: string | null) => {
+  const base = (fullName || '').trim() || (email || '').split('@')[0] || 'Cliente'
+  const parts = base.split(/\s+/)
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`
+}
 
 export async function GET() {
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-
-  const EXCLUDED_USER_IDS = new Set(['12ae1230-f9a6-44f8-9cdb-eb6881a7402d'])
-
-  const maskName = (fullName?: string | null, email?: string | null) => {
-    const base = (fullName || '').trim() || (email || '').split('@')[0] || 'Cliente'
-    const parts = base.split(/\s+/)
-    if (parts.length === 1) return parts[0]
-    return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`
-  }
 
 
   const { data: reqs, error } = await admin
