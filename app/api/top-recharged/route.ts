@@ -3,14 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 
 
 
-
 export async function GET() {
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-
-  const TOP_SIZE = 5
 
   const EXCLUDED_USER_IDS = new Set(['12ae1230-f9a6-44f8-9cdb-eb6881a7402d'])
 
@@ -39,7 +36,7 @@ export async function GET() {
 
   const top = Object.entries(totals)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, TOP_SIZE)
+    .slice(0, 5)
 
   if (top.length === 0) return NextResponse.json({ success: true, top: [] })
 
