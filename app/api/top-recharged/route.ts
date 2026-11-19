@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export const revalidate = 300
-
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 const TOP_SIZE = 5
 
@@ -20,6 +14,12 @@ const maskName = (fullName?: string | null, email?: string | null) => {
 }
 
 export async function GET() {
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+
   const { data: reqs, error } = await admin
     .from('wallet_requests')
     .select('user_id, amount')
