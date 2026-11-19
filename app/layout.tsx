@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Maintenance from '@/components/Maintenance'
 import LayoutWrapper from '@/components/LayoutWrapper'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
+import FamiliaImShop from '@/components/FamiliaImShop'
 
 export const metadata: Metadata = {
   title: 'IM Shop | Recargas al instante para Free Fire',
@@ -100,7 +99,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="es" className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}>
       <head>
         <script
           type="application/ld+json"
@@ -109,6 +108,8 @@ export default async function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-[#050505] text-zinc-200 selection:bg-yellow-400 selection:text-black relative">
         {showMaintenanceScreen ? <Maintenance /> : <LayoutWrapper>{children}</LayoutWrapper>}
+
+        {!showMaintenanceScreen && <FamiliaImShop />}
 
         <a
           href="https://wa.me/51936667063"
