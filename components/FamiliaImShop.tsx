@@ -15,7 +15,7 @@ const CYAN = '#00e5ff'
 const CRIMSON = '#ff2a1f'
 
 const RANK_META: Record<number, { color: string; label: string }> = {
-  1: { color: GOLD, label: 'Leyenda' },
+  1: { color: GOLD, label: 'LEYENDA' },
   2: { color: SILVER, label: 'Élite' },
   3: { color: BRONZE, label: 'Veterano' },
   4: { color: CYAN, label: 'Familia' },
