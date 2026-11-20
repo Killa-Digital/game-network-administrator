@@ -114,6 +114,7 @@ export default function GamePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerId: useCartStore.getState().playerId,
+          zoneId: useCartStore.getState().zoneId,
           nickname,
           productCode,
           price,
@@ -238,7 +239,7 @@ export default function GamePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-5 h-full">
-            <PlayerValidation />
+            <PlayerValidation slug={slug} />
           </div>
           <div className="lg:col-span-7 h-full">
             <PackageCatalog

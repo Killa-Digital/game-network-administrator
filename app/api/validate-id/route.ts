@@ -3,7 +3,7 @@ import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
-    const { playerId, gameCode } = await request.json()
+    const { playerId, gameCode, zoneId } = await request.json()
 
     const apiKey = process.env.CODESTORE_API_KEY!
     const secretKey = process.env.CODESTORE_SECRET_KEY!
@@ -11,13 +11,12 @@ export async function POST(request: Request) {
     const method = 'POST'
     const timestamp = Date.now().toString()
 
-    const codestoreGameCode = gameCode === 'freefire' ? 'free-fire-latam' : gameCode
-
     const bodyObj = {
-      game: codestoreGameCode,
-      playerId: playerId,
-      zoneId: '',
+      game: gameCode,
+      playerId,
+      zoneId: zoneId ?? '',
     }
+
     const stringifiedBody = JSON.stringify(bodyObj)
 
     const payload = `${timestamp}.${method}.${targetPath}.${stringifiedBody}`

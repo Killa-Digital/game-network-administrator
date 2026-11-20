@@ -223,14 +223,14 @@ export default function FamiliaImShop() {
                           <p className="text-2xl md:text-3xl font-black uppercase text-white tracking-tighter truncate">
                             {first.name}
                           </p>
-                          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mt-1">
-                            Total recargado
-                          </p>
-                          <Amount
-                            value={first.total}
-                            className="text-3xl md:text-4xl font-black font-mono tracking-tighter"
-                            style={{ color: GOLD, textShadow: `3px 3px 0px ${CRIMSON}66` }}
-                          />
+                          {/*<p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mt-1">*/}
+                          {/*  Total recargado*/}
+                          {/*</p>*/}
+                          {/*<Amount*/}
+                          {/*  value={first.total}*/}
+                          {/*  className="text-3xl md:text-4xl font-black font-mono tracking-tighter"*/}
+                          {/*  style={{ color: GOLD, textShadow: `3px 3px 0px ${CRIMSON}66` }}*/}
+                          {/*/>*/}
                         </div>
                       </div>
                     </div>
@@ -269,10 +269,10 @@ export default function FamiliaImShop() {
                                 {u.name}
                               </p>
                             </div>
-                            <Amount
-                              value={u.total}
-                              className="text-xl font-black font-mono text-white"
-                            />
+                            {/*<Amount*/}
+                            {/*  value={u.total}*/}
+                            {/*  className="text-xl font-black font-mono text-white"*/}
+                            {/*/>*/}
                           </div>
                         )
                       })}
@@ -294,10 +294,10 @@ export default function FamiliaImShop() {
                           <p className="flex-1 min-w-0 text-sm font-black uppercase text-white truncate">
                             {u.name}
                           </p>
-                          <Amount
-                            value={u.total}
-                            className="text-base font-black font-mono text-[#00e5ff]"
-                          />
+                          {/*<Amount*/}
+                          {/*  value={u.total}*/}
+                          {/*  className="text-base font-black font-mono text-[#00e5ff]"*/}
+                          {/*/>*/}
                         </div>
                       ))}
                     </div>

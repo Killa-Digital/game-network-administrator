@@ -3,8 +3,21 @@ import { useState } from 'react'
 import { CheckCircle2, ChevronRight, Flame, Loader2, Search, XCircle } from 'lucide-react'
 import { useCartStore } from '@/store/useCartStore'
 
-export default function PlayerValidation() {
+const GAME_CODES: Record<string, string> = {
+  'mobile-legends-bang-bang': 'mobile-legends',
+  'blood-strike-golds': 'blood-strike',
+  'free-fire-latam-10-bonus': 'free-fire-latam',
+}
+
+const DEFAULT_GAME_CODE = 'freefire'
+const GAMES_WITH_ZONE = ['mobile-legends']
+
+export default function PlayerValidation({ slug }: { slug: string }) {
+  const gameCode = GAME_CODES[slug] ?? DEFAULT_GAME_CODE
+  const needsZone = GAMES_WITH_ZONE.includes(gameCode)
+
   const [localPlayerId, setLocalPlayerId] = useState('')
+  const [localZoneId, setLocalZoneId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const { nickname, setPlayer } = useCartStore()
@@ -20,16 +33,20 @@ export default function PlayerValidation() {
       const response = await fetch('/api/validate-id', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId: localPlayerId, gameCode: 'freefire' }),
+        body: JSON.stringify({
+          playerId: localPlayerId,
+          zoneId: needsZone ? localZoneId : '',
+          gameCode,
+        }),
       })
       const data = await response.json()
 
       if (response.ok && data.success) {
-        setPlayer(localPlayerId, data.nickname)
+        setPlayer(localPlayerId, data.nickname, needsZone ? localZoneId : '')
       } else {
         const errorMessage = data.error?.toUpperCase() || ''
         if (errorMessage.includes('NOT ENABLED')) {
-          setPlayer(localPlayerId, 'USUARIO_DE_PRUEBA')
+          setPlayer(localPlayerId, 'USUARIO_DE_PRUEBA', needsZone ? localZoneId : '')
           return
         }
         setError(data.error || 'No se pudo validar el ID')
@@ -66,11 +83,27 @@ export default function PlayerValidation() {
             />
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5" />
           </div>
+          {needsZone && (
+            <div>
+              <label className="block text-[10px] font-black text-zinc-400 mb-3 uppercase tracking-[0.25em] pt-2">
+                Zone ID
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={localZoneId}
+                onChange={(e) => setLocalZoneId(e.target.value.replace(/\D/g, ''))}
+                placeholder="Ej: 1234"
+                className="w-full px-5 py-4 bg-[#070609] border-2 border-white/15 outline-none focus:border-primary focus:shadow-[4px_4px_0px_#ff2a1f] transition-all text-white font-black text-lg tracking-wider placeholder:text-zinc-700"
+                disabled={loading}
+              />
+            </div>
+          )}
         </div>
         <button
           type="submit"
           className="group w-full inline-flex items-center justify-center gap-3 py-4 bg-primary hover:bg-[#ffc42e] text-black font-black text-sm uppercase tracking-[0.18em] border-2 border-black shadow-[6px_6px_0px_#ff2a1f] hover:shadow-[2px_2px_0px_#ff2a1f] hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-50 disabled:hover:shadow-[6px_6px_0px_#ff2a1f] disabled:hover:translate-x-0 disabled:hover:translate-y-0 cursor-pointer disabled:cursor-not-allowed"
-          disabled={!localPlayerId || loading}
+          disabled={!localPlayerId || (needsZone && !localZoneId) || loading}
         >
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />

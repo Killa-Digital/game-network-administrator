@@ -3,9 +3,10 @@ import { create } from 'zustand'
 interface CartState {
   playerId: string
   nickname: string
+  zoneId: string
   productCode: string
   price: number
-  setPlayer: (id: string, name: string) => void
+  setPlayer: (playerId: string, nickname: string, zoneId?: string) => void
   setProduct: (code: string, price: number) => void
   clearCart: () => void
 }
@@ -13,9 +14,10 @@ interface CartState {
 export const useCartStore = create<CartState>((set) => ({
   playerId: '',
   nickname: '',
+  zoneId: '',
   productCode: '',
   price: 0,
-  setPlayer: (id, name) => set({ playerId: id, nickname: name }),
+  setPlayer: (playerId, nickname, zoneId = '') => set({ playerId, nickname, zoneId }),
   setProduct: (code, price) => set({ productCode: code, price }),
-  clearCart: () => set({ playerId: '', nickname: '', productCode: '', price: 0 }),
+  clearCart: () => set({ playerId: '', nickname: '', zoneId: '', productCode: '', price: 0 }),
 }))
